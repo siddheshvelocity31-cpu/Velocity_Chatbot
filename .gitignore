@@ -14,3 +14,5 @@ env/
 # IDE / Editor files
 .vscode/
 .idea/
+  
+chat_history/
