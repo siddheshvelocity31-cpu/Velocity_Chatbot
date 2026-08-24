@@ -1,0 +1,19 @@
+{
+  "session_id": "chat_20260824_105557",
+  "created_at": "2026-08-24 10:56:43",
+  "message_count": 2,
+  "messages": [
+    {
+      "role": "user",
+      "content": "write a python code to add 2 numbers ",
+      "tools": [],
+      "timestamp": "2026-08-24 10:56:43"
+    },
+    {
+      "role": "assistant",
+      "content": "Here is a simple and clean Python code to add two numbers:\n\n```python\n# Function to add two numbers\ndef add_two_numbers(num1, num2):\n    return num1 + num2\n\n# Example usage:\nnumber1 = 5.5\nnumber2 = 4.5\n\n# Calculate the sum\nresult = add_two_numbers(number1, number2)\n\n# Print the result\nprint(f\"The sum of {number1} and {number2} is: {result}\")\n```\n\n### How it works:\n1. **`def add_two_numbers(num1, num2):`** defines a function that takes two inputs (parameters).\n2. **`return num1 + num2`** adds the two numbers together and sends the result back.\n3. We store our numbers in variables `number1` and `number2`.\n4. We call the function and print the final result using an f-string for clean formatting. \n\nIf you want to make it **interactive** so users can input their own numbers, you can use this version:\n\n```python\n# Get input from the user and convert them to floats (so it supports decimals)\nnum1 = float(input(\"Enter the first number: \"))\nnum2 = float(input(\"Enter the second number: \"))\n\n# Calculate the sum\nresult = num1 + num2\n\n# Print the result\nprint(f\"The sum is: {result}\")\n```",
+      "tools": [],
+      "timestamp": "2026-08-24 10:56:47"
+    }
+  ]
+}

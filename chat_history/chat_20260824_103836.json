@@ -1,0 +1,129 @@
+{
+  "session_id": "chat_20260824_103836",
+  "created_at": "2026-08-24 10:50:32",
+  "message_count": 4,
+  "messages": [
+    {
+      "role": "user",
+      "content": "i want an round trip from mumbai ro ujjain ",
+      "tools": [],
+      "timestamp": "2026-08-24 10:50:32"
+    },
+    {
+      "role": "assistant",
+      "content": "Here is a comprehensive round-trip package estimate for a beautiful spiritual journey from **Mumbai to Ujjain (The Holy City of Mahakal)**. \n\nThis estimate is designed for a **3-Day / 2-Night** trip for **1 traveler** (prices can be adjusted for more travelers).\n\n---\n\n### 🚄 Transport Options (Round-Trip from Mumbai)\n*   **By Train (Convenient & Direct):**\n    *   **Details:** Trains like the *Avantika Express* or *Mumbai Indore Duronto* (approx. 9–11 hours).\n    *   **Round-trip Cost:** \n        *   Sleeper Class: ~₹650\n        *   3AC: ~₹1,650\n        *   2AC: ~₹2,350\n*   **By Flight (Fastest):**\n    *   **Details:** Direct flight from Mumbai to Indore Airport (1 hr 15 mins) + a scenic 45-minute cab ride to Ujjain.\n    *   **Round-trip Cost:** ~₹4,800\n\n---\n\n### 🏨 Package Tiers (Includes Stay, Transport, Food, & Activities)\n\nHere are the total package estimates based on different accommodation preferences:\n\n#### 1. Budget / Dharamshala & Ashram Yatri Niwas (Cheapest)\n*   **Stay:** *Mahakal Bhakt Niwas / Clean Ghat Ashrams* (Walking distance to Mahakal Temple, hot water, temple assistance).\n*   **Total with Train (3AC):** **~₹5,250**\n*   **Total with Flight:** **~₹8,400**\n*   *Ideal for solo pilgrims and budget-conscious families.*\n\n#### 2. Mid-Range / 3-Star Comfort (Highly Recommended)\n*   **Stay:** *Hotel Imperial Ujjain / Anjushree Courtyard* (Spacious AC rooms, pure veg restaurant, temple pickup assistance).\n*   **Total with Train (3AC):** **~₹8,450**\n*   **Total with Flight:** **~₹11,600**\n*   *Ideal for families wanting comfort and convenience.*\n\n#### 3. Premium 4-Star Luxury\n*   **Stay:** *Hotel Abika Elite / Anjushree Luxury Resort* (Multi-cuisine buffet, swimming pool, VIP Darshan assistance).\n*   **Total with Train (2AC):** **~₹15,050**\n*   **Total with Flight:** **~₹18,200**\n*   *Ideal for travelers looking for premium comfort and relaxed leisure.*\n\n#### 4. Ultra-Luxury 5-Star Heritage Sanctuary (Richest)\n*   **Stay:** *Rudraksh Club & Resort / Shipra Heritage Suite* (Private temple tour, sprawling club villa, royal hospitality).\n*   **Total with Train (2AC):** **~₹32,050**\n*   **Total with Flight:** **~₹35,200**\n*   *Ideal for a lavish, stress-free spiritual retreat.*\n\n---\n\n### 🌟 Key Attractions to Visit\n*   **Mahakaleshwar Jyotirlinga:** Experience the world-famous, divine *Live Bhasma Aarti*.\n*   **Mahakal Lok Corridor:** Walk through the majestic, newly built corridor showcasing stories of Lord Shiva.\n*   **Ram Ghat:** Witness the peaceful evening Shipra River Aarti.\n*   **Kal Bhairav Temple:** Famous for its unique sacred offerings.\n*   **Harsiddhi Mata Shaktipeeth & Mangalnath Temple**\n\n### 📅 Best Time to Visit\nThe absolute best time to plan your visit is between **October and March** when the weather is cool and pleasant for temple visits and exploring the ghats.\n\nIf you would like to adjust the number of days, the number of travelers, or need help booking/planning specific elements of your itinerary, just let me know! 😊",
+      "tools": [
+        {
+          "type": "call",
+          "name": "get_holiday_package",
+          "args": {
+            "destination": "Ujjain",
+            "source_city": "Mumbai"
+          }
+        },
+        {
+          "type": "result",
+          "name": "get_holiday_package",
+          "result": {
+            "status": "success",
+            "destination": "Ujjain (Mahakaleshwar Jyotirlinga)",
+            "tagline": "The Holy City of Mahakal — Jyotirlinga Darshan, Bhasma Aarti & Sacred Ghats",
+            "category": "Spiritual & Pilgrimage Destination",
+            "best_time_to_visit": "October to March",
+            "key_attractions": [
+              "Mahakaleshwar Jyotirlinga (Live Bhasma Aarti)",
+              "Mahakal Lok Corridor",
+              "Ram Ghat & Evening Shipra River Aarti",
+              "Kal Bhairav Temple (Sacred Offerings)",
+              "Harsiddhi Mata Shaktipeeth",
+              "Mangalnath Temple & Sandipani Ashram"
+            ],
+            "source_city": "Mumbai",
+            "duration_days": 3,
+            "duration_nights": 2,
+            "travelers": 1,
+            "rooms": 1,
+            "transport": {
+              "source": "Mumbai",
+              "train_available": true,
+              "train_details": "Avantika Express / Mumbai Indore Duronto (9-11 hrs)",
+              "train_roundtrip_sleeper_inr": 650,
+              "train_roundtrip_3ac_inr": 1650,
+              "train_roundtrip_2ac_inr": 2350,
+              "flight_available": true,
+              "flight_details": "Flight to Indore Airport (1 hr 15 mins) + 45 mins cab to Ujjain",
+              "flight_roundtrip_inr": 4800
+            },
+            "packages": [
+              {
+                "tier_key": "cheapest",
+                "tier_name": "Budget / Dharamshala & Ashram Yatri Niwas",
+                "hotel_name": "Mahakal Bhakt Niwas / Clean Ghat Ashrams",
+                "hotel_price_per_night_inr": 600,
+                "hotel_total_inr": 1200,
+                "rating": "4.2 ★",
+                "amenities": "Clean AC/Non-AC Room, Hot Water, Walking distance to Mahakal Temple, Temple assistance",
+                "description": "Ideal for pilgrims, budget families, and solo travelers on spiritual visit.",
+                "estimated_food_activities_total_inr": 2400,
+                "package_total_with_train_inr": 5250,
+                "package_total_with_flight_inr": 8400
+              },
+              {
+                "tier_key": "comfort",
+                "tier_name": "Mid-Range / 3-Star Comfort",
+                "hotel_name": "Hotel Imperial Ujjain / Anjushree Courtyard",
+                "hotel_price_per_night_inr": 2200,
+                "hotel_total_inr": 4400,
+                "rating": "4.4 ★",
+                "amenities": "Spacious Deluxe AC Rooms, Pure Veg Restaurant, Temple Pickup Assistance, Wi-Fi",
+                "description": "Comfortable family-friendly hotel close to the city center and temples.",
+                "estimated_food_activities_total_inr": 2400,
+                "package_total_with_train_inr": 8450,
+                "package_total_with_flight_inr": 11600
+              },
+              {
+                "tier_key": "premium",
+                "tier_name": "Premium 4-Star Luxury",
+                "hotel_name": "Hotel Abika Elite / Anjushree Luxury Resort",
+                "hotel_price_per_night_inr": 5500,
+                "hotel_total_inr": 11000,
+                "rating": "4.6 ★",
+                "amenities": "Multi-Cuisine Buffet, Swimming Pool, Spa, VIP Darshan Assistance, Luxury Suite",
+                "description": "Premium modern stay with fine dining and complete relaxation.",
+                "estimated_food_activities_total_inr": 2400,
+                "package_total_with_train_inr": 15050,
+                "package_total_with_flight_inr": 18200
+              },
+              {
+                "tier_key": "richest",
+                "tier_name": "Ultra-Luxury 5-Star Heritage Sanctuary",
+                "hotel_name": "Rudraksh Club & Resort / Shipra Heritage Suite",
+                "hotel_price_per_night_inr": 14000,
+                "hotel_total_inr": 28000,
+                "rating": "4.8 ★",
+                "amenities": "Sprawling Club Villa, Landscaped Gardens, Private Temple Tour, Royal Hospitality",
+                "description": "The finest luxury retreat in Ujjain with world-class amenities.",
+                "estimated_food_activities_total_inr": 2400,
+                "package_total_with_train_inr": 32050,
+                "package_total_with_flight_inr": 35200
+              }
+            ]
+          }
+        }
+      ],
+      "timestamp": "2026-08-24 10:50:41"
+    },
+    {
+      "role": "user",
+      "content": "write a python code to add 2 numbers",
+      "tools": [],
+      "timestamp": "2026-08-24 10:54:25"
+    },
+    {
+      "role": "assistant",
+      "content": "Here is a simple and clean Python code to add two numbers:\n\n```python\n# Function to add two numbers\ndef add_two_numbers(num1, num2):\n    return num1 + num2\n\n# Example usage:\nnumber1 = 15\nnumber2 = 27\n\n# Calculating the sum\nresult = add_two_numbers(number1, number2)\n\n# Printing the result\nprint(f\"The sum of {number1} and {number2} is: {result}\")\n```\n\n### Dynamic Version (Taking User Input):\nIf you want to take input directly from the user when running the code:\n\n```python\n# Taking input from the user\nnum1 = float(input(\"Enter the first number: \"))\nnum2 = float(input(\"Enter the second number: \"))\n\n# Adding the numbers\nresult = num1 + num2\n\n# Displaying the sum\nprint(f\"The sum is: {result}\")\n```\n\nLet me know if you need help with any other programming tasks! 😊",
+      "tools": [],
+      "timestamp": "2026-08-24 10:54:28"
+    }
+  ]
+}

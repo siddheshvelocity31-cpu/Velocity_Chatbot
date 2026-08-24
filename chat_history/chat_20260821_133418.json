@@ -1,0 +1,17 @@
+{
+  "session_id": "chat_20260821_133418",
+  "created_at": "2026-08-21 13:34:20",
+  "message_count": 2,
+  "messages": [
+    {
+      "role": "user",
+      "content": "Compare the camera sensors, Snapdragon 8 Elite vs A18 Pro, display, and price of iPhone 16 Pro Max and Samsung Galaxy S25 Ultra.",
+      "timestamp": "2026-08-21 13:34:20"
+    },
+    {
+      "role": "assistant",
+      "content": "📱 **Apple iPhone 16 Pro Max** *(Ultra-Premium iOS Flagship)*\n- **Brand**: Apple\n- **Display**: 6.9\" Super Retina XDR OLED (2868x1320 @ 460 ppi), ProMotion 1-120Hz LTPO Adaptive Refresh, Always-On Display, 2,000 nits Outdoor Peak Brightness, 1 nit Minimum, Next-Gen Ceramic Shield\n- **Processor & AI Chip**: Apple A18 Pro (2nd Gen 3nm TSMC N3E, 6-Core CPU: 2 Performance + 4 Efficiency, 6-Core GPU with Hardware Ray Tracing, 16-Core Neural Engine @ 35 TOPS)\n- **Camera System**:\nTriple Pro Camera System:\n  • Primary: 48MP Fusion (24mm, f/1.78, 2nd-gen Sensor-shift OIS, 100% Focus Pixels)\n  • Ultra-Wide: 48MP (13mm, f/2.2, 120° FOV, Hybrid Focus Pixels, Macro Photography)\n  • Telephoto: 12MP 5x Tetraprism Optical Zoom (120mm, f/2.8, 3D Sensor-Shift OIS)\n  • Video: 4K Dolby Vision HDR @ 120 fps, ProRes Log, Spatial Audio recording with 4 studio mics\n- **Battery & Charging**: 4,685 mAh Battery (Up to 33 hours continuous video playback), 30W Fast Wired Charging (50% in 30 mins), 25W MagSafe Wireless Charging, Qi2 support\n- **Build & Weight**: 227 grams, Grade 5 Titanium frame with microblasted matte texture, IP68 Water/Dust resistance (6m for up to 30 mins)\n- **Special Features**: Dedicated sapphire capacitive Camera Control button with haptic feedback, Action Button, Apple Intelligence on-device generative AI, Satellite Emergency SOS, Wi-Fi 7, USB-C 3.2 Gen 2 (10Gbps)\n- **Starting MSRP**: $1,199 (256GB) | $1,399 (512GB) | $1,599 (1TB)\n\n📱 **Samsung Galaxy S25 Ultra** *(Ultra-Premium Android AI Flagship with Stylus)*\n- **Brand**: Samsung\n- **Display**: 6.9\" Dynamic AMOLED 2X Flat Display (3120x1440 QHD+), 1-120Hz LTPO Variable Refresh, 2,600 nits Peak Brightness, Corning Gorilla Armor (75% reflection reduction & 4x scratch resistance)\n- **Processor & AI Chip**: Qualcomm Snapdragon 8 Elite for Galaxy (3nm TSMC, Custom Oryon CPU: 2 Prime Cores @ 4.47GHz + 6 Performance Cores @ 3.53GHz, Adreno 830 GPU, Hexagon NPU @ 45% AI boost)\n- **Camera System**:\nQuad Pro AI Camera Setup:\n  • Primary: 200MP ISOCELL HP2 (f/1.7, OIS, Super Quad Pixel AF)\n  • Periscope Telephoto: 50MP (5x Optical Zoom, 100x Space Zoom, f/3.4, OIS)\n  • Telephoto 2: 50MP (3x Optical Zoom, f/2.4, OIS)\n  • Ultra-Wide: 50MP (f/1.95, 120° FOV with Dual Pixel AF)\n  • Video: 8K @ 30fps / 4K @ 120fps with HDR10+ and Audio Eraser AI\n- **Battery & Charging**: 5,000 mAh All-Day Dual-Cell Battery, 45W Super Fast Charging 2.0 (65% in 30 mins), 15W Fast Wireless Charging 2.0, Wireless PowerShare\n- **Build & Weight**: 219 grams, Slim Rounded Titanium chassis, IP68 Water & Dust resistance\n- **Special Features**: Integrated S-Pen Stylus with Bluetooth Air Actions, Galaxy AI 2.0 (Real-Time Call Translation, Generative Photo Edit, Circle to Search with Google), 7 Generations of Android OS & Security Updates\n- **Starting MSRP**: $1,299 (256GB / 12GB RAM) | $1,419 (512GB / 16GB RAM) | $1,659 (1TB / 16GB RAM)",
+      "timestamp": "2026-08-21 13:34:20"
+    }
+  ]
+}

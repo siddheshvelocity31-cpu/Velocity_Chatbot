@@ -1,0 +1,117 @@
+{
+  "session_id": "chat_20260824_111217",
+  "created_at": "2026-08-24 11:15:38",
+  "message_count": 2,
+  "messages": [
+    {
+      "role": "user",
+      "content": "mumbai to ujjain retrun trip",
+      "tools": [],
+      "timestamp": "2026-08-24 11:15:38"
+    },
+    {
+      "role": "assistant",
+      "content": "Here is a comprehensive return trip plan from **Mumbai to Ujjain** (3 Days / 2 Nights) for a spiritual and memorable getaway to the holy city of Mahakal. 🔱✨\n\n---\n\n### **🌅 Destination Overview**\n* **Tagline:** The Holy City of Mahakal — Jyotirlinga Darshan, Bhasma Aarti & Sacred Ghats\n* **Best Time to Visit:** October to March (pleasant weather for temple visits)\n* **Key Attractions to Visit:**\n  * **Mahakaleshwar Jyotirlinga** (Experience the famous live *Bhasma Aarti*)\n  * **Mahakal Lok Corridor** (Stunning, newly built heritage corridor)\n  * **Ram Ghat** (For the beautiful evening Shipra River Aarti)\n  * **Kal Bhairav Temple** (Famous for its sacred offerings)\n  * **Harsiddhi Mata Shaktipeeth** & **Mangalnath Temple**\n\n---\n\n### **🚇 Transport Options (Mumbai ⇆ Ujjain Return)**\n\n* **Option 1: By Train (Direct & Scenic)**\n  * **Trains:** *Avantika Express* or *Mumbai Indore Duronto* (approx. 9–11 hours journey).\n  * **Estimated Round-Trip Train Fares:**\n    * **Sleeper Class:** ~₹650\n    * **3AC:** ~₹1,650\n    * **2AC:** ~₹2,350\n\n* **Option 2: By Flight (Fastest)**\n  * **Route:** Flight from Mumbai to **Indore Airport (IDR)** (approx. 1 hr 15 mins) + a 45-minute cab ride to Ujjain.\n  * **Estimated Round-Trip Flight Fare:** ~₹4,800\n\n---\n\n### **🏨 Package & Stay Options (3 Days / 2 Nights)**\n*All prices are estimated for **1 traveler** and include accommodation, food, local activities, and return transit.*\n\n#### **1. Budget / Dharamshala & Ashram Yatri Niwas (Cheapest)**\n* **Stay:** *Mahakal Bhakt Niwas* or clean ghat-side Ashrams (~₹600/night)\n* **Amenities:** Clean AC/Non-AC room, hot water, walking distance to Mahakal Temple, temple assistance.\n* **Total Trip Cost (with Train):** **₹5,250**\n* **Total Trip Cost (with Flight):** **₹8,400**\n\n#### **2. Mid-Range / 3-Star Comfort**\n* **Stay:** *Hotel Imperial Ujjain* or *Anjushree Courtyard* (~₹2,200/night)\n* **Amenities:** Spacious Deluxe AC rooms, pure veg restaurant, temple pickup assistance, Wi-Fi.\n* **Total Trip Cost (with Train):** **₹8,450**\n* **Total Trip Cost (with Flight):** **₹11,600**\n\n#### **3. Premium 4-Star Luxury**\n* **Stay:** *Hotel Abika Elite* or *Anjushree Luxury Resort* (~₹5,500/night)\n* **Amenities:** Multi-cuisine buffet, swimming pool, spa, VIP Darshan assistance, luxury suite.\n* **Total Trip Cost (with Train):** **₹15,050**\n* **Total Trip Cost (with Flight):** **₹18,200**\n\n#### **4. Ultra-Luxury 5-Star Heritage Sanctuary (Richest)**\n* **Stay:** *Rudraksh Club & Resort* or *Shipra Heritage Suite* (~₹14,000/night)\n* **Amenities:** Sprawling club villa, landscaped gardens, private temple tour, royal hospitality.\n* **Total Trip Cost (with Train):** **₹32,050**\n* **Total Trip Cost (with Flight):** **₹35,200**\n\n---\n\n### **💡 Quick Tips for Your Trip:**\n1. **Bhasma Aarti Booking:** If you wish to attend the famous 4:00 AM *Bhasma Aarti*, make sure to book your passes online well in advance through the official Mahakaleshwar temple website.\n2. **Dress Code:** Traditional attire (Sari/Salwar suit for women, Dhoti/Kurta-Pyjama for men) is mandatory if you want to enter the inner sanctum (*Garbhagriha*).\n\nLet me know if you would like me to adjust the number of days, travelers, or help you with anything else! Safe travels! 🙏😊",
+      "tools": [
+        {
+          "type": "call",
+          "name": "get_holiday_package",
+          "args": {
+            "destination": "Ujjain",
+            "source_city": "Mumbai"
+          }
+        },
+        {
+          "type": "result",
+          "name": "get_holiday_package",
+          "result": {
+            "status": "success",
+            "destination": "Ujjain (Mahakaleshwar Jyotirlinga)",
+            "tagline": "The Holy City of Mahakal — Jyotirlinga Darshan, Bhasma Aarti & Sacred Ghats",
+            "category": "Spiritual & Pilgrimage Destination",
+            "best_time_to_visit": "October to March",
+            "key_attractions": [
+              "Mahakaleshwar Jyotirlinga (Live Bhasma Aarti)",
+              "Mahakal Lok Corridor",
+              "Ram Ghat & Evening Shipra River Aarti",
+              "Kal Bhairav Temple (Sacred Offerings)",
+              "Harsiddhi Mata Shaktipeeth",
+              "Mangalnath Temple & Sandipani Ashram"
+            ],
+            "source_city": "Mumbai",
+            "duration_days": 3,
+            "duration_nights": 2,
+            "travelers": 1,
+            "rooms": 1,
+            "transport": {
+              "source": "Mumbai",
+              "train_available": true,
+              "train_details": "Avantika Express / Mumbai Indore Duronto (9-11 hrs)",
+              "train_roundtrip_sleeper_inr": 650,
+              "train_roundtrip_3ac_inr": 1650,
+              "train_roundtrip_2ac_inr": 2350,
+              "flight_available": true,
+              "flight_details": "Flight to Indore Airport (1 hr 15 mins) + 45 mins cab to Ujjain",
+              "flight_roundtrip_inr": 4800
+            },
+            "packages": [
+              {
+                "tier_key": "cheapest",
+                "tier_name": "Budget / Dharamshala & Ashram Yatri Niwas",
+                "hotel_name": "Mahakal Bhakt Niwas / Clean Ghat Ashrams",
+                "hotel_price_per_night_inr": 600,
+                "hotel_total_inr": 1200,
+                "rating": "4.2 ★",
+                "amenities": "Clean AC/Non-AC Room, Hot Water, Walking distance to Mahakal Temple, Temple assistance",
+                "description": "Ideal for pilgrims, budget families, and solo travelers on spiritual visit.",
+                "estimated_food_activities_total_inr": 2400,
+                "package_total_with_train_inr": 5250,
+                "package_total_with_flight_inr": 8400
+              },
+              {
+                "tier_key": "comfort",
+                "tier_name": "Mid-Range / 3-Star Comfort",
+                "hotel_name": "Hotel Imperial Ujjain / Anjushree Courtyard",
+                "hotel_price_per_night_inr": 2200,
+                "hotel_total_inr": 4400,
+                "rating": "4.4 ★",
+                "amenities": "Spacious Deluxe AC Rooms, Pure Veg Restaurant, Temple Pickup Assistance, Wi-Fi",
+                "description": "Comfortable family-friendly hotel close to the city center and temples.",
+                "estimated_food_activities_total_inr": 2400,
+                "package_total_with_train_inr": 8450,
+                "package_total_with_flight_inr": 11600
+              },
+              {
+                "tier_key": "premium",
+                "tier_name": "Premium 4-Star Luxury",
+                "hotel_name": "Hotel Abika Elite / Anjushree Luxury Resort",
+                "hotel_price_per_night_inr": 5500,
+                "hotel_total_inr": 11000,
+                "rating": "4.6 ★",
+                "amenities": "Multi-Cuisine Buffet, Swimming Pool, Spa, VIP Darshan Assistance, Luxury Suite",
+                "description": "Premium modern stay with fine dining and complete relaxation.",
+                "estimated_food_activities_total_inr": 2400,
+                "package_total_with_train_inr": 15050,
+                "package_total_with_flight_inr": 18200
+              },
+              {
+                "tier_key": "richest",
+                "tier_name": "Ultra-Luxury 5-Star Heritage Sanctuary",
+                "hotel_name": "Rudraksh Club & Resort / Shipra Heritage Suite",
+                "hotel_price_per_night_inr": 14000,
+                "hotel_total_inr": 28000,
+                "rating": "4.8 ★",
+                "amenities": "Sprawling Club Villa, Landscaped Gardens, Private Temple Tour, Royal Hospitality",
+                "description": "The finest luxury retreat in Ujjain with world-class amenities.",
+                "estimated_food_activities_total_inr": 2400,
+                "package_total_with_train_inr": 32050,
+                "package_total_with_flight_inr": 35200
+              }
+            ]
+          }
+        }
+      ],
+      "timestamp": "2026-08-24 11:15:47"
+    }
+  ]
+}
