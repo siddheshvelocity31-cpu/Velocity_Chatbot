@@ -2,14 +2,29 @@ import os, uuid, json
 from datetime import datetime
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, session
+from flask_cors import CORS
+import traceback
 from bot import GeminiChatbot, sanitize_key
 import config, supabase_db
 
 app = Flask(__name__)
+
+class VercelFix(object):
+    def __init__(self, app):
+        self.app = app
+    def __call__(self, environ, start_response):
+        environ['SCRIPT_NAME'] = ''
+        return self.app(environ, start_response)
+
+app.wsgi_app = VercelFix(app.wsgi_app)
+CORS(app)
 app.secret_key = os.urandom(24)
 ROOT_DIR = Path(__file__).resolve().parent
 CHAT_HISTORY_DIR = ROOT_DIR / "chat_history"
-CHAT_HISTORY_DIR.mkdir(exist_ok=True)
+try:
+    CHAT_HISTORY_DIR.mkdir(exist_ok=True)
+except Exception:
+    pass # Vercel read-only filesystem fallback
 _bots = {}
 
 def _bot(sid, api_key="", model=""):
@@ -55,6 +70,7 @@ def chat():
         tools = [t["tool"] for t in (bot.tool_call_history[-3:] if bot.tool_call_history else [])]
         return jsonify({"reply": reply, "tool_calls": tools, "session_id": sid})
     except Exception as e:
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/session/new", methods=["POST"])
@@ -125,6 +141,11 @@ def save_hist():
 def test_supa():
     d = request.get_json() or {}
     return jsonify(supabase_db.test_supabase_connection(d.get("supabase_url", ""), d.get("supabase_key", "")))
+
+@app.route("/<path:path>", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+def catch_all(path):
+    print(f"DEBUG: Catch-all triggered for path: {path}")
+    return jsonify({"error": f"Path not found by Flask: {path}", "method": request.method, "headers": dict(request.headers)}), 404
 
 @app.route("/api/models")
 def models():
