@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // Gemini AI Chatbot - Frontend App Logic
 // ============================================================
 
@@ -57,8 +57,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ─── API Helpers ──────────────────────────────────────────────────────────────
 async function post(url, body) {
-  const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
-  return r.json();
+  const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, credentials: 'include', body: JSON.stringify(body) });
+  const text = await r.text();
+  if (!r.ok) {
+    throw new Error(`HTTP ${r.status}: ${text.substring(0, 150)}`);
+  }
+  try {
+    return JSON.parse(text);
+  } catch(err) {
+    throw new Error(`Non-JSON response: ${text.substring(0, 150)}`);
+  }
 }
 
 // ─── Load Models ─────────────────────────────────────────────────────────────
@@ -203,7 +211,7 @@ async function sendMessage(overrideText) {
     loadHistory();
   } catch(e) {
     removeTyping();
-    const errMsg = { role: 'bot', content: '⚠️ Network error. Please try again.', time: now() };
+    const errMsg = { role: 'bot', content: '⚠️ Error: ' + e.message, time: now() };
     state.messages.push(errMsg);
     appendMessage(errMsg);
   } finally {
