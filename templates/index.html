@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini AI Chatbot</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-icon">🤖</span>
+        <div class="logo-text">
+          <h1>Gemini AI</h1>
+          <p>Your Intelligent Assistant</p>
+        </div>
+      </div>
+      <button class="btn-new-chat" onclick="newChat()">＋ New Chat</button>
+    </div>
+
+    <div class="sidebar-body">
+
+      <!-- Chat History -->
+      <div class="section-label">Chat History</div>
+      <div id="historyList"><div class="no-history">Loading...</div></div>
+
+      <!-- Settings Accordion -->
+      <div class="accordion">
+        <button class="accordion-header" onclick="toggleAccordion('settingsBody')">
+          ⚙️ Settings <span class="accordion-arrow">▶</span>
+        </button>
+        <div class="accordion-body" id="settingsBody">
+          <div class="setting-group">
+            <label class="setting-label">Gemini API Key</label>
+            <input id="apiKeyInput" type="password" class="setting-input" placeholder="Enter your API key..." />
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">AI Model</label>
+            <select id="modelSelect" class="setting-select"></select>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">Supabase URL</label>
+            <input id="supaUrlInput" type="text" class="setting-input" placeholder="https://xxx.supabase.co" />
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">Supabase Key</label>
+            <input id="supaKeyInput" type="password" class="setting-input" placeholder="anon public key..." />
+          </div>
+          <div class="setting-group">
+            <button class="btn-test" onclick="testSupabase()">🧪 Test Supabase Connection</button>
+            <div id="connStatus" class="conn-status"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tools Accordion -->
+      <div class="accordion">
+        <button class="accordion-header" onclick="toggleAccordion('toolsBody')">
+          🛠️ Available Tools <span class="accordion-arrow">▶</span>
+        </button>
+        <div class="accordion-body" id="toolsBody">
+          <div class="tools-wrap" id="toolsList"><span class="no-history">Loading tools...</span></div>
+        </div>
+      </div>
+
+    </div><!-- end sidebar-body -->
+  </aside>
+
+  <!-- ═══════════════ MAIN CHAT ═══════════════ -->
+  <main class="main">
+
+    <!-- Top Bar -->
+    <div class="topbar">
+      <h2>💬 Chat</h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="storageBadge" class="storage-badge">💾 Local</span>
+        <span id="modelBadge" class="model-badge">gemini-3.5-flash</span>
+      </div>
+    </div>
+
+    <!-- Chat Messages Area -->
+    <div class="chat-area" id="chatArea">
+
+      <!-- Welcome / Empty State -->
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">🤖</div>
+        <h2>Welcome to Gemini AI Assistant</h2>
+        <p>Ask me anything — holiday packages, weather, car specs, laptop reviews, math calculations, and more!</p>
+        <div class="quick-prompts">
+          <button class="quick-btn" onclick="quickSend('Plan a 3 days holiday package for Goa from Mumbai with all hotel options from cheapest to richest!')">
+            <span class="qb-icon">🏖️</span>
+            <span class="qb-text">Goa 3-Day Trip from Mumbai</span>
+          </button>
+          <button class="quick-btn" onclick="quickSend('Suggest a 4 days Manali holiday package from Delhi with return travel fares and hotels from budget to luxury!')">
+            <span class="qb-icon">🏔️</span>
+            <span class="qb-text">Manali Package from Delhi</span>
+          </button>
+          <button class="quick-btn" onclick="quickSend('Plan a 2 days spiritual trip to Ujjain from Mumbai with return train fares and hotel options!')">
+            <span class="qb-icon">🛕</span>
+            <span class="qb-text">Ujjain Pilgrimage Trip</span>
+          </button>
+          <button class="quick-btn" onclick="quickSend('Show me the Kashmir holiday package from Delhi with houseboat and snow resort options!')">
+            <span class="qb-icon">❄️</span>
+            <span class="qb-text">Kashmir Paradise Package</span>
+          </button>
+          <button class="quick-btn" onclick="quickSend('What is the holiday package for Rajasthan from Mumbai with royal palace hotels and return fares?')">
+            <span class="qb-icon">🕌</span>
+            <span class="qb-text">Rajasthan Royal Palace Tour</span>
+          </button>
+          <button class="quick-btn" onclick="quickSend('i want to buy an umbrella cost of 40 rs and quantity is 500 with an gst of 5 percent calculate the total expense')">
+            <span class="qb-icon">🧮</span>
+            <span class="qb-text">Purchase Calculator with GST</span>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- end chat-area -->
+
+    <!-- Input Area -->
+    <div class="input-area">
+      <div class="input-wrap">
+        <textarea id="msgInput" rows="1" placeholder="Ask me anything... (Enter to send, Shift+Enter for newline)"></textarea>
+        <button id="sendBtn" class="btn-send" onclick="sendMessage()" title="Send">➤</button>
+      </div>
+      <div class="input-hint">Powered by Google Gemini AI • Holiday Packages • Weather • Cars • Gadgets • Math</div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
