@@ -52,6 +52,24 @@ CREATE POLICY "Allow all operations on chat_messages"
     USING (true)
     WITH CHECK (true);
 
+-- 6. Table: user_logins (Stores logged-in Google users)
+CREATE TABLE IF NOT EXISTS public.user_logins (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    name TEXT,
+    picture TEXT,
+    last_login TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.user_logins ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow all operations on user_logins" ON public.user_logins;
+CREATE POLICY "Allow all operations on user_logins"
+    ON public.user_logins
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+
 -- ============================================================================
 -- 6. Table: holiday_packages
 -- Stores curated holiday destinations, tiered hotels, and transport fares

@@ -142,6 +142,17 @@ def test_supa():
     d = request.get_json() or {}
     return jsonify(supabase_db.test_supabase_connection(d.get("supabase_url", ""), d.get("supabase_key", "")))
 
+@app.route("/api/user/sync", methods=["POST"])
+def sync_user():
+    d = request.get_json() or {}
+    email = d.get("email", "")
+    name = d.get("name", "")
+    picture = d.get("picture", "")
+    surl = d.get("supabase_url", "")
+    skey = d.get("supabase_key", "")
+    res = supabase_db.sync_user_login(email, name, picture, surl, skey)
+    return jsonify(res)
+
 @app.route("/<path:path>", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 def catch_all(path):
     print(f"DEBUG: Catch-all triggered for path: {path}")

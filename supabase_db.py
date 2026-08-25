@@ -190,3 +190,23 @@ def delete_chat_session(session_id: str, url: Optional[str] = None, key: Optiona
         return True
     except Exception:
         return False
+
+
+def sync_user_login(email: str, name: str = "", picture: str = "", url: Optional[str] = None, key: Optional[str] = None) -> Dict[str, Any]:
+    """Save or update logged-in Google user in Supabase user_logins table."""
+    client = get_supabase_client(url, key)
+    if not client or not email:
+        return {"success": False, "reason": "client_not_configured_or_no_email"}
+
+    try:
+        user_payload = {
+            "email": email.strip(),
+            "name": name.strip(),
+            "picture": picture.strip(),
+            "last_login": datetime.utcnow().isoformat()
+        }
+        client.table("user_logins").upsert(user_payload, on_conflict="email").execute()
+        return {"success": True, "email": email}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+

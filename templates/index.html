@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <script>window.GOOGLE_CLIENT_ID = '713167472493-okm8761hnnq81a3bk7a08m1ccnpu83iv.apps.googleusercontent.com';</script>
@@ -176,6 +176,17 @@
     } else {
       placeholder.textContent = initial;
     }
+    fetch('/api/user/sync', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        email: profile.email || '',
+        name: profile.name || '',
+        picture: profile.picture || '',
+        supabase_url: localStorage.getItem('supabase_url') || '',
+        supabase_key: localStorage.getItem('supabase_key') || ''
+      })
+    }).catch(e => {});
     if (typeof initApp === 'function') initApp(profile.email);
   }
 
