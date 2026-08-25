@@ -1,23 +1,7 @@
-# Google GenAI SDK (Official SDK for Gemini API)
-google-genai>=2.19.0
-
-# Environment variable management
+﻿google-genai>=2.19.0
 python-dotenv>=1.0.0
-
-# Formatted CLI tool execution outputs
 rich>=13.0.0
-
-# Interactive Web Interface
-streamlit>=1.30.0
-
-# Cloud Database for Chat History
 supabase>=2.0.0
-
-# Google GenAI SDK (Official SDK for Gemini API)
-google-genai>=2.19.0
-
-# Environment variable management
-python-dotenv>=1.0.0
-
-#flask web server
 Flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=26.1.0
