@@ -14,32 +14,33 @@ const API = {
   tools:      '/api/tools',
 };
 
-// ─── State ────────────────────────────────────────────────────────────────────
 let state = {
-  sessionId:    '',
-  messages:     [],
-  isTyping:     false,
-  apiKey:       localStorage.getItem('gemini_api_key') || '',
-  model:        localStorage.getItem('gemini_model') || 'gemini-3.5-flash',
-  supabaseUrl:  localStorage.getItem('supabase_url') || '',
-  supabaseKey:  localStorage.getItem('supabase_key') || '',
+  sessionId:   '',
+  messages:    [],
+  isTyping:    false,
+  apiKey:      localStorage.getItem('gemini_api_key') || '',
+  model:       localStorage.getItem('gemini_model') || 'gemini-3.5-flash',
+  supabaseUrl: localStorage.getItem('supabase_url') || '',
+  supabaseKey: localStorage.getItem('supabase_key') || '',
+  userEmail:   '',
 };
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  state.sessionId = 'chat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-
-  // Restore settings to inputs
-  document.getElementById('apiKeyInput').value  = state.apiKey;
-  document.getElementById('supaUrlInput').value = state.supabaseUrl;
-  document.getElementById('supaKeyInput').value = state.supabaseKey;
-
+async function initApp(userEmail) {
+  state.userEmail = userEmail || '';
+  const prefix = 'chat_' + (state.userEmail.replace(/[^a-z0-9]/gi,'_')) + '_';
+  state.sessionId = prefix + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
   await loadModels();
-  await loadTools();
   await loadHistory();
+  setupInputHandlers();
+}
 
-  // Input auto-resize
+document.addEventListener('DOMContentLoaded', () => {
+  setupInputHandlers();
+});
+
+function setupInputHandlers() {
   const inp = document.getElementById('msgInput');
+  if (!inp) return;
   inp.addEventListener('input', () => {
     inp.style.height = 'auto';
     inp.style.height = Math.min(inp.scrollHeight, 140) + 'px';
@@ -47,72 +48,54 @@ document.addEventListener('DOMContentLoaded', async () => {
   inp.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
-
-  // Settings change handlers
-  document.getElementById('apiKeyInput').addEventListener('change',  e => { state.apiKey = e.target.value.trim(); localStorage.setItem('gemini_api_key', state.apiKey); });
-  document.getElementById('supaUrlInput').addEventListener('change', e => { state.supabaseUrl = e.target.value.trim(); localStorage.setItem('supabase_url', state.supabaseUrl); });
-  document.getElementById('supaKeyInput').addEventListener('change', e => { state.supabaseKey = e.target.value.trim(); localStorage.setItem('supabase_key', state.supabaseKey); });
-  document.getElementById('modelSelect').addEventListener('change',  e => { state.model = e.target.value; localStorage.setItem('gemini_model', state.model); document.getElementById('modelBadge').textContent = state.model; });
-});
-
-// ─── API Helpers ──────────────────────────────────────────────────────────────
-async function post(url, body) {
-  const r = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, credentials: 'include', body: JSON.stringify(body) });
-  const text = await r.text();
-  if (!r.ok) {
-    throw new Error(`HTTP ${r.status}: ${text.substring(0, 150)}`);
-  }
-  try {
-    return JSON.parse(text);
-  } catch(err) {
-    throw new Error(`Non-JSON response: ${text.substring(0, 150)}`);
-  }
 }
 
-// ─── Load Models ─────────────────────────────────────────────────────────────
+async function post(url, body) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    credentials: 'include',
+    body: JSON.stringify(body)
+  });
+  const text = await r.text();
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${text.substring(0, 150)}`);
+  try { return JSON.parse(text); }
+  catch(err) { throw new Error(`Non-JSON response: ${text.substring(0, 150)}`); }
+}
+
 async function loadModels() {
   try {
     const data = await fetch(API.models).then(r => r.json());
-    const sel = document.getElementById('modelSelect');
-    sel.innerHTML = '';
-    (data.models || []).forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m; opt.textContent = m;
-      if (m === state.model) opt.selected = true;
-      sel.appendChild(opt);
-    });
-    document.getElementById('modelBadge').textContent = state.model;
+    const badge = document.getElementById('modelBadge');
+    if (badge) badge.textContent = state.model;
   } catch(e) {}
 }
 
-// ─── Load Tools ──────────────────────────────────────────────────────────────
-async function loadTools() {
-  try {
-    const data = await fetch(API.tools).then(r => r.json());
-    const wrap = document.getElementById('toolsList');
-    wrap.innerHTML = '';
-    (data.tools || []).forEach(t => {
-      const pill = document.createElement('span');
-      pill.className = 'tool-pill';
-      pill.textContent = (t.icon || '') + ' ' + (t.name || t);
-      wrap.appendChild(pill);
-    });
-  } catch(e) {}
-}
-
-// ─── Load History ─────────────────────────────────────────────────────────────
 async function loadHistory() {
   try {
-    const data = await post(API.history, { supabase_url: state.supabaseUrl, supabase_key: state.supabaseKey });
+    const data = await post(API.history, {
+      supabase_url: state.supabaseUrl,
+      supabase_key: state.supabaseKey,
+      user_email:   state.userEmail,
+    });
     const list = document.getElementById('historyList');
     list.innerHTML = '';
-    const sessions = data.sessions || [];
+
+    let sessions = (data.sessions || []).filter(s =>
+      !state.userEmail ||
+      (s.session_id && s.session_id.includes(
+        state.userEmail.replace(/[^a-z0-9]/gi,'_')
+      ))
+    );
+
     if (!sessions.length) {
       list.innerHTML = '<div class="no-history">No previous chats</div>';
       return;
     }
+
     const badge = document.getElementById('storageBadge');
     if (badge) badge.textContent = data.source === 'supabase' ? '☁️ Supabase' : '💾 Local';
+
     sessions.forEach(s => {
       const item = document.createElement('div');
       item.className = 'history-item' + (s.session_id === state.sessionId ? ' active' : '');
@@ -127,10 +110,13 @@ async function loadHistory() {
   } catch(e) {}
 }
 
-// ─── Open Session ─────────────────────────────────────────────────────────────
 async function openSession(sessionId) {
   try {
-    const data = await post(API.loadSess, { session_id: sessionId, supabase_url: state.supabaseUrl, supabase_key: state.supabaseKey });
+    const data = await post(API.loadSess, {
+      session_id:   sessionId,
+      supabase_url: state.supabaseUrl,
+      supabase_key: state.supabaseKey,
+    });
     state.sessionId = sessionId;
     state.messages  = data.messages || [];
     renderAllMessages();
@@ -146,55 +132,58 @@ function highlightHistory(sid) {
   });
 }
 
-// ─── Delete Session ───────────────────────────────────────────────────────────
 async function deleteSession(sessionId, e) {
   e.stopPropagation();
   if (!confirm('Delete this chat?')) return;
-  await post(API.deleteSess, { session_id: sessionId, supabase_url: state.supabaseUrl, supabase_key: state.supabaseKey });
+  await post(API.deleteSess, {
+    session_id:   sessionId,
+    supabase_url: state.supabaseUrl,
+    supabase_key: state.supabaseKey,
+  });
   if (sessionId === state.sessionId) newChat();
   else loadHistory();
 }
 
-// ─── New Chat ─────────────────────────────────────────────────────────────────
 async function newChat() {
-  // Save current session before clearing
   if (state.messages.length) {
-    await post(API.saveSess, { session_id: state.sessionId, messages: state.messages, supabase_url: state.supabaseUrl, supabase_key: state.supabaseKey });
+    await post(API.saveSess, {
+      session_id:   state.sessionId,
+      messages:     state.messages,
+      supabase_url: state.supabaseUrl,
+      supabase_key: state.supabaseKey,
+    });
   }
-  const data = await post(API.newSession, { session_id: state.sessionId, messages: state.messages, supabase_url: state.supabaseUrl, supabase_key: state.supabaseKey });
-  state.sessionId = data.session_id;
+  const prefix = 'chat_' + (state.userEmail.replace(/[^a-z0-9]/gi,'_')) + '_';
+  state.sessionId = prefix + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
   state.messages  = [];
   renderAllMessages();
   loadHistory();
 }
 
-// ─── Send Message ─────────────────────────────────────────────────────────────
 async function sendMessage(overrideText) {
   const inp = document.getElementById('msgInput');
   const text = (overrideText || inp.value).trim();
   if (!text || state.isTyping) return;
-
   if (!overrideText) { inp.value = ''; inp.style.height = 'auto'; }
 
-  // Add user message
   const userMsg = { role: 'user', content: text, time: now() };
   state.messages.push(userMsg);
   appendMessage(userMsg);
   hideWelcome();
 
-  // Show typing
   state.isTyping = true;
   showTyping();
   setSendDisabled(true);
 
   try {
     const data = await post(API.chat, {
-      message:       text,
-      session_id:    state.sessionId,
-      api_key:       state.apiKey,
-      model:         state.model,
-      supabase_url:  state.supabaseUrl,
-      supabase_key:  state.supabaseKey,
+      message:      text,
+      session_id:   state.sessionId,
+      api_key:      state.apiKey,
+      model:        state.model,
+      supabase_url: state.supabaseUrl,
+      supabase_key: state.supabaseKey,
+      user_email:   state.userEmail,
     });
     removeTyping();
     if (data.error) {
@@ -206,8 +195,12 @@ async function sendMessage(overrideText) {
       state.messages.push(botMsg);
       appendMessage(botMsg);
     }
-    // Auto-save
-    post(API.saveSess, { session_id: state.sessionId, messages: state.messages, supabase_url: state.supabaseUrl, supabase_key: state.supabaseKey });
+    post(API.saveSess, {
+      session_id:   state.sessionId,
+      messages:     state.messages,
+      supabase_url: state.supabaseUrl,
+      supabase_key: state.supabaseKey,
+    });
     loadHistory();
   } catch(e) {
     removeTyping();
@@ -221,14 +214,10 @@ async function sendMessage(overrideText) {
   }
 }
 
-// ─── Render ───────────────────────────────────────────────────────────────────
 function renderAllMessages() {
   const area = document.getElementById('chatArea');
   area.innerHTML = '';
-  if (!state.messages.length) {
-    showWelcome();
-    return;
-  }
+  if (!state.messages.length) { showWelcome(); return; }
   hideWelcome();
   state.messages.forEach(m => appendMessage(m));
 }
@@ -236,41 +225,33 @@ function renderAllMessages() {
 function appendMessage(msg) {
   const area = document.getElementById('chatArea');
   const isUser = msg.role === 'user';
-
   const row = document.createElement('div');
   row.className = 'msg-row ' + (isUser ? 'user' : 'bot');
-
   const avatar = document.createElement('div');
   avatar.className = 'msg-avatar';
   avatar.textContent = isUser ? '👤' : '🤖';
-
   const content = document.createElement('div');
   content.className = 'msg-content';
-
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
   if (isUser) {
     bubble.textContent = msg.content;
   } else {
     bubble.innerHTML = renderMarkdown(msg.content);
-    // Syntax highlight code blocks
     bubble.querySelectorAll('pre code').forEach(el => { if (window.hljs) hljs.highlightElement(el); });
   }
-
   const meta = document.createElement('div');
   meta.style.cssText = 'display:flex;gap:8px;align-items:center;';
   const timeEl = document.createElement('span');
   timeEl.className = 'msg-time';
   timeEl.textContent = msg.time || '';
   meta.appendChild(timeEl);
-
   if (!isUser && msg.tools && msg.tools.length) {
     const toolEl = document.createElement('span');
     toolEl.className = 'tool-used';
     toolEl.textContent = '🔧 ' + msg.tools.join(', ');
     meta.appendChild(toolEl);
   }
-
   content.appendChild(bubble);
   content.appendChild(meta);
   row.appendChild(avatar);
@@ -299,32 +280,9 @@ function showTyping() {
   area.scrollTop = area.scrollHeight;
 }
 function removeTyping() { const el = document.getElementById('typingRow'); if (el) el.remove(); }
-
-function showWelcome() { document.getElementById('welcome').style.display = 'flex'; }
-function hideWelcome() { document.getElementById('welcome').style.display = 'none'; }
-
+function showWelcome() { const w = document.getElementById('welcome'); if(w) w.style.display = 'flex'; }
+function hideWelcome() { const w = document.getElementById('welcome'); if(w) w.style.display = 'none'; }
 function setSendDisabled(v) { document.getElementById('sendBtn').disabled = v; }
 function now() { return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
 function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
-// ─── Supabase Test ────────────────────────────────────────────────────────────
-async function testSupabase() {
-  const el = document.getElementById('connStatus');
-  el.textContent = 'Testing...'; el.className = 'conn-status';
-  try {
-    const data = await post(API.testSupa, { supabase_url: state.supabaseUrl, supabase_key: state.supabaseKey });
-    if (data.success) { el.textContent = '✅ ' + data.message; el.className = 'conn-status success'; }
-    else { el.textContent = '❌ ' + (data.error || 'Failed'); el.className = 'conn-status error'; }
-  } catch(e) { el.textContent = '❌ Network error'; el.className = 'conn-status error'; }
-}
-
-// ─── Accordion ───────────────────────────────────────────────────────────────
-function toggleAccordion(id) {
-  const body = document.getElementById(id);
-  const header = body.previousElementSibling;
-  body.classList.toggle('open');
-  header.classList.toggle('open');
-}
-
-// ─── Quick Prompts ───────────────────────────────────────────────────────────
 function quickSend(text) { sendMessage(text); }

@@ -1,16 +1,77 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>window.GOOGLE_CLIENT_ID = '713167472493-okm8761hnnq81a3bk7a08m1ccnpu83iv.apps.googleusercontent.com';</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gemini AI Chatbot</title>
   <link rel="stylesheet" href="/static/css/style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    #loginOverlay {
+      position: fixed; inset: 0;
+      background: #0f1117;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .login-card {
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 16px;
+      padding: 48px 40px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .login-card .login-icon { font-size: 56px; margin-bottom: 16px; }
+    .login-card h2 { color: #fff; font-size: 24px; margin-bottom: 8px; }
+    .login-card p  { color: #888; font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
+    #googleSignInBtn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: #fff; color: #333;
+      border: none; border-radius: 8px;
+      padding: 12px 24px; font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s;
+    }
+    #googleSignInBtn:hover { background: #f0f0f0; }
+    #googleSignInBtn img { width: 20px; height: 20px; }
+    .user-info { display: flex; align-items: center; gap: 8px; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #4f46e5; }
+    .user-avatar-placeholder {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #4f46e5; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700;
+    }
+    .logout-btn {
+      background: none; border: 1px solid #444;
+      color: #aaa; border-radius: 6px;
+      padding: 4px 10px; font-size: 12px;
+      cursor: pointer;
+    }
+    .logout-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+  </style>
 </head>
 <body>
-<div class="app">
 
-  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+<!-- LOGIN OVERLAY -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <div class="login-icon">🤖</div>
+    <h2>Welcome to Gemini AI</h2>
+    <p>Your intelligent assistant for travel, weather, gadgets, calculations and more. Sign in to save your chat history.</p>
+    <button id="googleSignInBtn" onclick="signInWithGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+      Continue with Google
+    </button>
+  </div>
+</div>
+
+<div class="app" id="appContainer" style="display:none;">
+
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="logo">
@@ -22,106 +83,54 @@
       </div>
       <button class="btn-new-chat" onclick="newChat()">＋ New Chat</button>
     </div>
-
     <div class="sidebar-body">
-
-      <!-- Chat History -->
       <div class="section-label">Chat History</div>
       <div id="historyList"><div class="no-history">Loading...</div></div>
-
-      <!-- Settings Accordion -->
-      <div class="accordion">
-        <button class="accordion-header" onclick="toggleAccordion('settingsBody')">
-          ⚙️ Settings <span class="accordion-arrow">▶</span>
-        </button>
-        <div class="accordion-body" id="settingsBody">
-          <div class="setting-group">
-            <label class="setting-label">Gemini API Key</label>
-            <input id="apiKeyInput" type="password" class="setting-input" placeholder="Enter your API key..." />
-          </div>
-          <div class="setting-group">
-            <label class="setting-label">AI Model</label>
-            <select id="modelSelect" class="setting-select"></select>
-          </div>
-          <div class="setting-group">
-            <label class="setting-label">Supabase URL</label>
-            <input id="supaUrlInput" type="text" class="setting-input" placeholder="https://xxx.supabase.co" />
-          </div>
-          <div class="setting-group">
-            <label class="setting-label">Supabase Key</label>
-            <input id="supaKeyInput" type="password" class="setting-input" placeholder="anon public key..." />
-          </div>
-          <div class="setting-group">
-            <button class="btn-test" onclick="testSupabase()">🧪 Test Supabase Connection</button>
-            <div id="connStatus" class="conn-status"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tools Accordion -->
-      <div class="accordion">
-        <button class="accordion-header" onclick="toggleAccordion('toolsBody')">
-          🛠️ Available Tools <span class="accordion-arrow">▶</span>
-        </button>
-        <div class="accordion-body" id="toolsBody">
-          <div class="tools-wrap" id="toolsList"><span class="no-history">Loading tools...</span></div>
-        </div>
-      </div>
-
-    </div><!-- end sidebar-body -->
+    </div>
   </aside>
 
-  <!-- ═══════════════ MAIN CHAT ═══════════════ -->
+  <!-- MAIN CHAT -->
   <main class="main">
-
-    <!-- Top Bar -->
     <div class="topbar">
       <h2>💬 Chat</h2>
       <div style="display:flex;gap:8px;align-items:center;">
         <span id="storageBadge" class="storage-badge">💾 Local</span>
         <span id="modelBadge" class="model-badge">gemini-3.5-flash</span>
+        <div class="user-info">
+          <div class="user-avatar-placeholder" id="userInitial">?</div>
+          <button class="logout-btn" onclick="signOut()">Sign out</button>
+        </div>
       </div>
     </div>
 
-    <!-- Chat Messages Area -->
     <div class="chat-area" id="chatArea">
-
-      <!-- Welcome / Empty State -->
       <div class="welcome" id="welcome">
         <div class="welcome-icon">🤖</div>
         <h2>Welcome to Gemini AI Assistant</h2>
         <p>Ask me anything — holiday packages, weather, car specs, laptop reviews, math calculations, and more!</p>
         <div class="quick-prompts">
           <button class="quick-btn" onclick="quickSend('Plan a 3 days holiday package for Goa from Mumbai with all hotel options from cheapest to richest!')">
-            <span class="qb-icon">🏖️</span>
-            <span class="qb-text">Goa 3-Day Trip from Mumbai</span>
+            <span class="qb-icon">🏖️</span><span class="qb-text">Goa 3-Day Trip from Mumbai</span>
           </button>
           <button class="quick-btn" onclick="quickSend('Suggest a 4 days Manali holiday package from Delhi with return travel fares and hotels from budget to luxury!')">
-            <span class="qb-icon">🏔️</span>
-            <span class="qb-text">Manali Package from Delhi</span>
+            <span class="qb-icon">🏔️</span><span class="qb-text">Manali Package from Delhi</span>
           </button>
           <button class="quick-btn" onclick="quickSend('Plan a 2 days spiritual trip to Ujjain from Mumbai with return train fares and hotel options!')">
-            <span class="qb-icon">🛕</span>
-            <span class="qb-text">Ujjain Pilgrimage Trip</span>
+            <span class="qb-icon">🛕</span><span class="qb-text">Ujjain Pilgrimage Trip</span>
           </button>
           <button class="quick-btn" onclick="quickSend('Show me the Kashmir holiday package from Delhi with houseboat and snow resort options!')">
-            <span class="qb-icon">❄️</span>
-            <span class="qb-text">Kashmir Paradise Package</span>
+            <span class="qb-icon">❄️</span><span class="qb-text">Kashmir Paradise Package</span>
           </button>
           <button class="quick-btn" onclick="quickSend('What is the holiday package for Rajasthan from Mumbai with royal palace hotels and return fares?')">
-            <span class="qb-icon">🕌</span>
-            <span class="qb-text">Rajasthan Royal Palace Tour</span>
+            <span class="qb-icon">🕌</span><span class="qb-text">Rajasthan Royal Palace Tour</span>
           </button>
           <button class="quick-btn" onclick="quickSend('i want to buy an umbrella cost of 40 rs and quantity is 500 with an gst of 5 percent calculate the total expense')">
-            <span class="qb-icon">🧮</span>
-            <span class="qb-text">Purchase Calculator with GST</span>
+            <span class="qb-icon">🧮</span><span class="qb-text">Purchase Calculator with GST</span>
           </button>
         </div>
       </div>
+    </div>
 
-    </div><!-- end chat-area -->
-
-    <!-- Input Area -->
     <div class="input-area">
       <div class="input-wrap">
         <textarea id="msgInput" rows="1" placeholder="Ask me anything... (Enter to send, Shift+Enter for newline)"></textarea>
@@ -129,13 +138,60 @@
       </div>
       <div class="input-hint">Powered by Google Gemini AI • Holiday Packages • Weather • Cars • Gadgets • Math</div>
     </div>
-
   </main>
 </div>
 
-<!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="/static/js/app.js"></script>
+<script>
+  let currentUser = null;
+
+  function signInWithGoogle() {
+    google.accounts.oauth2.initTokenClient({
+      client_id: window.GOOGLE_CLIENT_ID,
+      scope: 'email profile',
+      callback: async (tokenResponse) => {
+        if (tokenResponse.error) return;
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: 'Bearer ' + tokenResponse.access_token }
+        });
+        const profile = await res.json();
+        onLoginSuccess(profile);
+      }
+    }).requestAccessToken();
+  }
+
+  function onLoginSuccess(profile) {
+    currentUser = profile;
+    localStorage.setItem('gemini_user', JSON.stringify(profile));
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'flex';
+    const initial = (profile.name || profile.email || '?')[0].toUpperCase();
+    const placeholder = document.getElementById('userInitial');
+    if (profile.picture) {
+      const img = document.createElement('img');
+      img.src = profile.picture; img.className = 'user-avatar'; img.alt = profile.name;
+      placeholder.replaceWith(img);
+    } else {
+      placeholder.textContent = initial;
+    }
+    if (typeof initApp === 'function') initApp(profile.email);
+  }
+
+  function signOut() {
+    localStorage.removeItem('gemini_user');
+    currentUser = null;
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('appContainer').style.display = 'none';
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('gemini_user');
+    if (saved) {
+      try { onLoginSuccess(JSON.parse(saved)); } catch(e) {}
+    }
+  });
+</script>
 </body>
 </html>
