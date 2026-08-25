@@ -157,6 +157,7 @@ def tools():
     return jsonify({"tools": TOOL_METADATA})
 
 if __name__ == "__main__":
-    print("\n  Gemini AI Chatbot - Flask Web Server")
-    print("  Open: http://localhost:5001\n")
-    app.run(debug=False, host="0.0.0.0", port=5001)
+    port = int(os.environ.get("PORT", 5001))
+    print(f"\n  Gemini AI Chatbot - Flask Web Server")
+    print(f"  Listening on port {port}\n")
+    app.run(debug=False, host="0.0.0.0", port=port)
