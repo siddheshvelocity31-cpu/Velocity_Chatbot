@@ -819,10 +819,7 @@ def get_holiday_package(
     if not transport_info:
         # If the source city is not available, we STILL return the hotel package
         # but we mark transport as unavailable and add a clear notice.
-        available_cities = [c.title() for c in dest.get("transport_from", {}).keys()]
-        city_list = ", ".join(available_cities) if available_cities else "other major cities"
-        
-        transport_notice = f"Trains and flights are not available directly from {source_city.title()}. You can travel through the nearest available stations such as: {city_list}."
+        transport_notice = f"No available flights or trains from {source_city.title()}."
         
         transport_info = {
             "train_available": False,
