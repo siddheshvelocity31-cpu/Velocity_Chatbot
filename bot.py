@@ -186,10 +186,84 @@ class GeminiChatbot:
             }
 
 
+    # ── Out-of-scope keywords that are CLEARLY outside tool coverage ──────────
+    _OUT_OF_SCOPE_KEYWORDS = [
+        "prime minister", "president", "who is", "who was", "history of",
+        "capital of", "population of", "explain", "what is quantum",
+        "write a poem", "write a story", "write code", "code for",
+        "recipe", "how to cook", "translate", "in french", "in spanish",
+        "meaning of", "definition of", "difference between",
+        "tell me about", "essay on", "summarize", "summarise",
+        "which country", "which state", "why did", "how did",
+        "politics", "election", "war", "religion", "philosophy",
+        "science", "biology", "chemistry", "physics", "history",
+        "economics", "stock market", "cricket score", "sports score",
+        "movie", "song", "actor", "actress", "celebrity",
+    ]
+
+    _TOOL_KEYWORDS = [
+        # weather
+        "weather", "temperature", "forecast", "rain", "humid", "climate",
+        # calculator
+        "calculate", "gst", "total cost", "price", "how much", "percent", "discount",
+        "purchase", "buy", "quantity", "expense",
+        # time
+        "time", "date", "timezone", "what day",
+        # cars
+        "car", "tesla", "porsche", "bmw", "ferrari", "lamborghini", "mustang",
+        "audi", "corvette", "honda", "toyota", "horsepower", "ev range", "0-60",
+        # laptops
+        "laptop", "macbook", "dell xps", "thinkpad", "asus rog", "hp spectre",
+        "notebook", "ultrabook",
+        # mobiles
+        "iphone", "samsung", "galaxy", "pixel", "oneplus", "redmi", "xiaomi",
+        "phone", "mobile", "smartphone",
+        # travel
+        "goa", "manali", "kashmir", "ujjain", "rajasthan", "jaipur", "kerala",
+        "andaman", "varanasi", "trip", "travel", "holiday", "package", "hotel",
+        "flight", "train", "tour", "destination",
+        # greetings
+        "hi", "hello", "hey", "how are you",
+    ]
+
+    def _is_out_of_scope(self, message: str) -> bool:
+        """Detect if message is clearly outside tool coverage using a strict whitelist."""
+        msg = message.lower().strip()
+        
+        # 1. Exact match conversational phrases (or starts with them)
+        _CONVERSATIONAL = [
+            'hi', 'hello', 'hey', 'how are you', 'good morning', 'good evening',
+            'thanks', 'thank you', 'ok', 'okay', 'cool', 'awesome', 'great',
+            'yes', 'no', 'yep', 'nope', 'sure', 'bye', 'goodbye'
+        ]
+        if msg in _CONVERSATIONAL or any(msg.startswith(g + ' ') for g in _CONVERSATIONAL):
+            return False
+            
+        # 2. Whitelist: If any tool keyword matches, allow it to go to Gemini
+        for kw in self._TOOL_KEYWORDS:
+            if kw in msg:
+                return False
+                
+        # 3. Everything else is blocked! No length exceptions!
+        return True
+
+    _OUT_OF_SCOPE_REPLY = (
+        "⚠️ **I'm sorry, I can only assist with my available tools:**\n\n"
+        "🌤️ **Weather** | 🧮 **Calculator** | 🕒 **Date & Time** | "
+        "🏎️ **Car Specs** | 💻 **Laptop Specs** | 📱 **Mobile Specs** | 🏖️ **Holiday Packages**\n\n"
+        "Your question is outside my current capabilities. Please ask about one of the topics above!"
+    )
+
     def send_message(self, message: str) -> str:
         """Send a user message to the chatbot and maintain continuous multi-turn dialogue."""
         self.conversation_history.append({"role": "user", "content": message})
         reply = None
+
+        # Block out-of-scope queries BEFORE hitting Gemini API
+        if self._is_out_of_scope(message):
+            reply = self._OUT_OF_SCOPE_REPLY
+            self.conversation_history.append({"role": "assistant", "content": reply})
+            return reply
 
         if self.is_live_mode():
             if not self.client or not self.chat:
@@ -1050,17 +1124,8 @@ class GeminiChatbot:
                 "How can I help you today?"
             )
 
-        # Absolute last resort — warm and helpful, never cold
-        return (
-            "I'm here and listening! 😊 You can ask me about:\n\n"
-            "- 🏎️ **Cars** — Porsche 911, Ferrari, Tesla, BMW specs & pricing\n"
-            "- 💻 **Laptops** — MacBook Pro M4, Dell XPS, ThinkPad, ASUS ROG\n"
-            "- 📱 **Phones** — iPhone 16 Pro Max, Galaxy S25 Ultra, Pixel 9\n"
-            "- 🌤️ **Weather** — Any city or country worldwide\n"
-            "- 🧮 **Calculations** — GST, purchase totals, discounts\n"
-            "- 💬 **Just chat** — Tell me how your day went!\n\n"
-            "What would you like to explore? 🌟"
-        )
+        # Absolute last resort — out of scope refusal
+        return self._OUT_OF_SCOPE_REPLY
 
     def reset_chat(self) -> None:
         """Reset conversation history and start a new session."""

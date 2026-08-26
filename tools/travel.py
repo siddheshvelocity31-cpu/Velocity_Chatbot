@@ -798,10 +798,18 @@ def get_holiday_package(
         return {
             "status": "error",
             "message": f"Destination '{destination}' not found in our featured packages.",
-            "available_destinations": ["Goa", "Manali", "Jaipur / Udaipur", "Kerala (Munnar / Alleppey)", "Varanasi", "Andaman & Nicobar Islands"]
+            "available_destinations": ["Goa", "Manali", "Ujjain", "Kashmir", "Rajasthan / Jaipur", "Kerala", "Varanasi", "Andaman"]
         }
 
-    dest = DESTINATIONS_DATA[dest_key]
+    # Try fetching from Supabase database first
+    try:
+        from supabase_db import fetch_holiday_packages_from_supabase
+        supa_destinations = fetch_holiday_packages_from_supabase()
+    except Exception:
+        supa_destinations = {}
+
+    db_source = supa_destinations if (supa_destinations and dest_key in supa_destinations) else DESTINATIONS_DATA
+    dest = db_source[dest_key]
     source_key = normalize_source(source_city)
 
     # Transport details
@@ -825,7 +833,9 @@ def get_holiday_package(
     for tier_key in tiers_to_process:
         if tier_key in hotels:
             h = hotels[tier_key]
-            hotel_total = h["price_per_night_inr"] * nights * rooms_needed
+            # Handle key mismatch between local dict and Supabase JSON
+            price_per_night = h.get("price_per_night_inr") or h.get("price_per_night", 0)
+            hotel_total = price_per_night * nights * rooms_needed
             food_activities_total = dest["daily_food_activities_estimate_inr"] * duration_days * travelers
 
             # 1. Budget package with Train (if available)
