@@ -815,19 +815,17 @@ def get_holiday_package(
     # Transport details
     transport_info = dest.get("transport_from", {}).get(source_key)
     
-    if transport_info:
-        # Found exact match for source city
-        source_label = source_key.title()
-    else:
-        # Not found, fallback to mumbai
-        transport_info = dest.get("transport_from", {}).get("mumbai")
-        if transport_info:
-            source_label = "Mumbai (Standard Reference)"
-        else:
-            # Neither source city nor mumbai found (e.g. incomplete Supabase data)
-            transport_info = {}
-            source_label = source_city.title()
-
+    if not transport_info:
+        # If the source city is not available in Supabase, return a clear message
+        available_cities = [c.title() for c in dest.get("transport_from", {}).keys()]
+        city_list = ", ".join(available_cities) if available_cities else "None"
+        return {
+            "status": "error",
+            "message": f"Travel data is not available for the source city '{source_city.title()}'. Currently, we only have travel data from: {city_list}.",
+            "available_sources": available_cities
+        }
+    
+    source_label = source_key.title()
     nights = max(1, duration_days - 1)
     travelers = max(1, num_travelers)
     rooms_needed = math.ceil(travelers / 2)  # 2 people per room assumption
