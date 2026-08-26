@@ -814,15 +814,19 @@ def get_holiday_package(
 
     # Transport details
     transport_info = dest.get("transport_from", {}).get(source_key)
+    transport_notice = ""
     
     if not transport_info:
-        # If the source city is not available in Supabase, return a helpful message
+        # If the source city is not available, we STILL return the hotel package
+        # but we mark transport as unavailable and add a clear notice.
         available_cities = [c.title() for c in dest.get("transport_from", {}).keys()]
         city_list = ", ".join(available_cities) if available_cities else "other major cities"
-        return {
-            "status": "error",
-            "message": f"Trains or flights are not available directly from {source_city.title()} to {dest['name']}. However, you can travel through the nearest available stations such as: {city_list}.",
-            "available_sources": available_cities
+        
+        transport_notice = f"Trains and flights are not available directly from {source_city.title()}. You can travel through the nearest available stations such as: {city_list}."
+        
+        transport_info = {
+            "train_available": False,
+            "flight_available": False
         }
     
     source_label = source_key.title()
@@ -887,6 +891,7 @@ def get_holiday_package(
         "rooms": rooms_needed,
         "transport": {
             "source": source_label,
+            "transport_notice": transport_notice,
             "train_available": transport_info.get("train_available", False),
             "train_details": transport_info.get("train_details", "N/A"),
             "train_roundtrip_sleeper_inr": transport_info.get("train_roundtrip_sleeper_inr"),
