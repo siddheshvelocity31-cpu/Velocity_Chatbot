@@ -816,12 +816,12 @@ def get_holiday_package(
     transport_info = dest.get("transport_from", {}).get(source_key)
     
     if not transport_info:
-        # If the source city is not available in Supabase, return a clear message
+        # If the source city is not available in Supabase, return a helpful message
         available_cities = [c.title() for c in dest.get("transport_from", {}).keys()]
-        city_list = ", ".join(available_cities) if available_cities else "None"
+        city_list = ", ".join(available_cities) if available_cities else "other major cities"
         return {
             "status": "error",
-            "message": f"Travel data is not available for the source city '{source_city.title()}'. Currently, we only have travel data from: {city_list}.",
+            "message": f"Trains or flights are not available directly from {source_city.title()} to {dest['name']}. However, you can travel through the nearest available stations such as: {city_list}.",
             "available_sources": available_cities
         }
     
