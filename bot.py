@@ -419,19 +419,24 @@ class GeminiChatbot:
             cars_found = ["porsche 911", "tesla model 3", "ferrari 296", "audi r8"]
 
         # ── General car buying / suggestion intent ────────────────────────────
-        # Only trigger if user is NOT asking about phones, laptops, or other gadgets
-        _phone_keywords = ["iphone", "phone", "mobile", "samsung", "galaxy", "oneplus", "pixel", "redmi", "xiaomi", "smartphone"]
-        _laptop_keywords = ["laptop", "macbook", "notebook", "dell", "thinkpad", "asus", "hp", "lenovo"]
-        is_asking_about_gadget = any(w in msg_lower for w in _phone_keywords + _laptop_keywords)
+        # STRICT NLP: Only trigger if the message EXPLICITLY mentions car-related words.
+        # "want to buy" alone is NOT enough — the message must also contain a car term.
+        # This prevents "I want to buy a house/phone/laptop" from triggering car suggestions.
+        _car_context_words = [
+            "car", "vehicle", "automobile", "auto", "sedan", "suv", "hatchback",
+            "sports car", "electric car", "ev car", "budget car", "family car",
+            "affordable car", "buy car", "purchase car", "buy a car", "purchase a car"
+        ]
+        _buying_words = [
+            "buy", "purchase", "suggest", "recommend", "looking for", "planning to get",
+            "want a car", "need a car", "which car", "what car", "best car", "good car"
+        ]
 
-        car_buying_intent = not is_asking_about_gadget and any(phrase in msg_lower for phrase in [
-            "want to buy", "want to purchase", "buy a car", "buy car", "purchase a car",
-            "suggest me", "suggest a car", "suggest car", "recommend a car", "recommend car",
-            "which car", "which car should", "what car should", "good car", "best car",
-            "car suggestion", "car recommendation", "looking for a car", "planning to buy",
-            "next month", "this month", "budget car", "affordable car", "family car",
-            "sports car", "electric car", "sedan", "suv", "hatchback"
-        ])
+        # Must have BOTH a buying word AND a car context word, OR explicit car phrases
+        has_car_context = any(w in msg_lower for w in _car_context_words)
+        has_buying_signal = any(w in msg_lower for w in _buying_words)
+        car_buying_intent = has_car_context and has_buying_signal and not cars_found
+
 
         if car_buying_intent and not cars_found:
             # Detect budget hints in message
