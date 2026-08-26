@@ -419,7 +419,12 @@ class GeminiChatbot:
             cars_found = ["porsche 911", "tesla model 3", "ferrari 296", "audi r8"]
 
         # ── General car buying / suggestion intent ────────────────────────────
-        car_buying_intent = any(phrase in msg_lower for phrase in [
+        # Only trigger if user is NOT asking about phones, laptops, or other gadgets
+        _phone_keywords = ["iphone", "phone", "mobile", "samsung", "galaxy", "oneplus", "pixel", "redmi", "xiaomi", "smartphone"]
+        _laptop_keywords = ["laptop", "macbook", "notebook", "dell", "thinkpad", "asus", "hp", "lenovo"]
+        is_asking_about_gadget = any(w in msg_lower for w in _phone_keywords + _laptop_keywords)
+
+        car_buying_intent = not is_asking_about_gadget and any(phrase in msg_lower for phrase in [
             "want to buy", "want to purchase", "buy a car", "buy car", "purchase a car",
             "suggest me", "suggest a car", "suggest car", "recommend a car", "recommend car",
             "which car", "which car should", "what car should", "good car", "best car",
