@@ -814,17 +814,19 @@ def get_holiday_package(
 
     # Transport details
     transport_info = dest.get("transport_from", {}).get(source_key)
-    if not transport_info:
-        # Fallback to mumbai transport if origin not directly mapped
-        transport_info = dest.get("transport_from", {}).get("mumbai")
-        source_label = "Mumbai (Standard Reference)"
-        
-    if not transport_info:
-        # If even mumbai is missing (e.g. Supabase data is incomplete), use a default empty transport dict
-        transport_info = {}
-        source_label = source_city.title()
+    
+    if transport_info:
+        # Found exact match for source city
+        source_label = source_key.title()
     else:
-        source_label = source_label if not transport_info else source_key.title() if source_label != "Mumbai (Standard Reference)" else source_label
+        # Not found, fallback to mumbai
+        transport_info = dest.get("transport_from", {}).get("mumbai")
+        if transport_info:
+            source_label = "Mumbai (Standard Reference)"
+        else:
+            # Neither source city nor mumbai found (e.g. incomplete Supabase data)
+            transport_info = {}
+            source_label = source_city.title()
 
     nights = max(1, duration_days - 1)
     travelers = max(1, num_travelers)
