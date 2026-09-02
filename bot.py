@@ -770,16 +770,18 @@ class GeminiChatbot:
 
                 card_text += (
                     f"\n---\n"
-                    f"### 💰 Complete Package Budget Breakdown (Travel + Hotel + Food/Activities):\n\n"
-                    f"| Package Tier | With 🚆 Train (3AC) Return | With ✈️ Flight Return | Ideal For |\n"
-                    f"| :--- | :---: | :---: | :--- |\n"
+                    f"### 💰 Complete Package Budget Breakdown (Travel + Hotel + Food/Activities for {travelers} Pax):\n\n"
+                    f"| Package Tier | Train (Sleeper) | Train (3AC) | Train (2AC) | Flight Return | Ideal For |\n"
+                    f"| :--- | :---: | :---: | :---: | :---: | :--- |\n"
                 )
 
                 for p in pkg_data["packages"]:
-                    train_total_str = f"**₹{p['package_total_with_train_inr']:,}**" if p.get("package_total_with_train_inr") else "N/A"
+                    sl_str = f"**₹{p['package_total_with_train_sleeper_inr']:,}**" if p.get("package_total_with_train_sleeper_inr") else "N/A"
+                    ac3_str = f"**₹{p['package_total_with_train_inr']:,}**" if p.get("package_total_with_train_inr") else "N/A"
+                    ac2_str = f"**₹{p['package_total_with_train_2ac_inr']:,}**" if p.get("package_total_with_train_2ac_inr") else "N/A"
                     flight_total_str = f"**₹{p['package_total_with_flight_inr']:,}**" if p.get("package_total_with_flight_inr") else "N/A"
                     card_text += (
-                        f"| **{p['tier_name']}** | {train_total_str} | {flight_total_str} | {p['description']} |\n"
+                        f"| **{p['tier_name']}** | {sl_str} | {ac3_str} | {ac2_str} | {flight_total_str} | {p['description']} |\n"
                     )
 
                 attractions_str = " • ".join(pkg_data.get("key_attractions", []))

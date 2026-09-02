@@ -844,13 +844,19 @@ def get_holiday_package(
             hotel_total = price_per_night * nights * rooms_needed
             food_activities_total = dest["daily_food_activities_estimate_inr"] * duration_days * travelers
 
-            # 1. Budget package with Train (if available)
+            # 1. Budget package with Train classes (if available)
             if transport_info.get("train_available"):
-                train_fare_per_person = transport_info.get("train_roundtrip_3ac_inr", 2000)
-                total_with_train = (train_fare_per_person * travelers) + hotel_total + food_activities_total
+                sl_fare = transport_info.get("train_roundtrip_sleeper_inr", 800)
+                ac3_fare = transport_info.get("train_roundtrip_3ac_inr", 2000)
+                ac2_fare = transport_info.get("train_roundtrip_2ac_inr", 2800)
+                
+                total_with_train_sleeper = (sl_fare * travelers) + hotel_total + food_activities_total
+                total_with_train_3ac = (ac3_fare * travelers) + hotel_total + food_activities_total
+                total_with_train_2ac = (ac2_fare * travelers) + hotel_total + food_activities_total
             else:
-                train_fare_per_person = None
-                total_with_train = None
+                total_with_train_sleeper = None
+                total_with_train_3ac = None
+                total_with_train_2ac = None
 
             # 2. Package with Flight
             if transport_info.get("flight_available"):
@@ -870,7 +876,9 @@ def get_holiday_package(
                 "amenities": h["amenities"],
                 "description": h["description"],
                 "estimated_food_activities_total_inr": food_activities_total,
-                "package_total_with_train_inr": total_with_train,
+                "package_total_with_train_sleeper_inr": total_with_train_sleeper,
+                "package_total_with_train_inr": total_with_train_3ac,
+                "package_total_with_train_2ac_inr": total_with_train_2ac,
                 "package_total_with_flight_inr": total_with_flight
             })
 
