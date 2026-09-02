@@ -204,7 +204,7 @@ class GeminiChatbot:
         "weather", "temperature", "forecast", "rain", "humid", "climate",
         # calculator
         "calculate", "gst", "total cost", "price", "how much", "percent", "discount",
-        "purchase", "buy", "quantity", "expense",
+        "purchase", "buy", "quantity", "expense", "items", "units", "pieces", "rs", "rupee", "rupees",
         # time
         "time", "date", "timezone", "what day",
         # cars
@@ -925,8 +925,8 @@ class GeminiChatbot:
             )
 
         # 7. Math / Calculation Intent
-        # Guard: skip math entirely if we already resolved car / laptop / phone specs
-        already_handled = bool(cars_found or laptops_found or phones_found)
+        # Guard: skip math entirely if we already resolved car / laptop / phone specs or travel package
+        already_handled = bool(cars_found or laptops_found or phones_found or has_travel_intent)
         has_math_keywords = (not already_handled) and any(w in msg_lower for w in [
             "calculate", "calulate", "calcuate", "compute", "math", "sqrt",
             "discount", "tax", "gst", "vat", "expense", "total expense",
@@ -963,6 +963,8 @@ class GeminiChatbot:
                     r"(?:cost|price|rs\.?|rupee[s]?|₹)\s*(?:of\s+)?(\d+(?:\.\d+)?)",
                     msg_lower
                 )
+                if not price_match:
+                    price_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:rs\.?|rupee[s]?|₹|inr)", msg_lower)
                 if price_match:
                     unit_price = float(price_match.group(1))
 
@@ -984,18 +986,26 @@ class GeminiChatbot:
                 if tax_match:
                     tax_rate = float(tax_match.group(1))
 
-                # Fallback: if we have 3 numbers and context, assign positionally
-                if unit_price is None and quantity is None and len(nums) >= 2:
-                    # Heuristic: smaller number = unit price, larger = quantity
-                    if has_gst and len(nums) >= 3:
-                        # Guess: cost, quantity, gst in some order
-                        sorted_nums = sorted(nums[:3])
-                        tax_rate = tax_rate or sorted_nums[0]  # smallest = gst %
-                        unit_price = unit_price or sorted_nums[1]
-                        quantity = quantity or sorted_nums[2]
-                    elif len(nums) >= 2:
-                        unit_price = unit_price or nums[0]
-                        quantity = quantity or nums[1]
+                # Fallback: if numbers are available, assign missing values
+                if (unit_price is None or quantity is None) and len(nums) >= 2:
+                    if unit_price is not None and quantity is None:
+                        # Find the first number in nums that is not unit_price
+                        other_nums = [n for n in nums if n != unit_price]
+                        if other_nums:
+                            quantity = other_nums[0]
+                    elif quantity is not None and unit_price is None:
+                        other_nums = [n for n in nums if n != quantity]
+                        if other_nums:
+                            unit_price = other_nums[0]
+                    elif unit_price is None and quantity is None:
+                        if has_gst and len(nums) >= 3:
+                            sorted_nums = sorted(nums[:3])
+                            tax_rate = tax_rate or sorted_nums[0]  # smallest = gst %
+                            unit_price = unit_price or sorted_nums[1]
+                            quantity = quantity or sorted_nums[2]
+                        elif len(nums) >= 2:
+                            unit_price = nums[1] if nums[0] < 100 and nums[1] > nums[0] else nums[0]
+                            quantity = nums[0] if unit_price == nums[1] else nums[1]
 
                 if unit_price is not None and quantity is not None:
                     subtotal = unit_price * quantity
@@ -1050,8 +1060,10 @@ class GeminiChatbot:
                     expr = "(1500 * 0.18) + (250 / 5) - sqrt(81)"
                 elif re.search(r"calculate|calulate|calcuate", msg_lower):
                     calc_part = re.split(r"calulat[e]?|calculat[e]?", message, flags=re.IGNORECASE)[-1].strip().rstrip("?.,!")
-                    if calc_part and re.search(r"\d", calc_part):
-                        expr = calc_part
+                    # Clean GST/percent syntax like 18% GST -> * 0.18 or + 18%
+                    calc_clean = re.sub(r"(\d+(?:\.\d+)?)\s*%\s*(?:gst|tax|vat)?", r"(\1 / 100)", calc_part, flags=re.IGNORECASE)
+                    if calc_clean and re.search(r"\d", calc_clean):
+                        expr = calc_clean
                 else:
                     m = re.search(r"(\d+(?:\.\d+)?(?:\s*[\+\-\*\/\^]\s*\d+(?:\.\d+)?)+)", message)
                     if m:
