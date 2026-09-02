@@ -194,9 +194,13 @@ def delete_chat_session(session_id: str, url: Optional[str] = None, key: Optiona
 
 def sync_user_login(email: str, name: str = "", picture: str = "", url: Optional[str] = None, key: Optional[str] = None) -> Dict[str, Any]:
     """Save or update logged-in Google user in Supabase user_logins table."""
-    client = get_supabase_client(url, key)
-    if not client or not email:
-        return {"success": False, "reason": "client_not_configured_or_no_email"}
+    u = (url or config.SUPABASE_URL or "").strip()
+    k = (key or config.SUPABASE_KEY or "").strip()
+    client = get_supabase_client(u, k)
+    if not client:
+        return {"success": False, "error": "Supabase URL and Key are not configured in environment variables."}
+    if not email:
+        return {"success": False, "error": "No email provided."}
 
     try:
         user_payload = {
@@ -208,5 +212,38 @@ def sync_user_login(email: str, name: str = "", picture: str = "", url: Optional
         client.table("user_logins").upsert(user_payload, on_conflict="email").execute()
         return {"success": True, "email": email}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        err_msg = str(e)
+        if "user_logins" in err_msg or "PGRST204" in err_msg:
+            return {"success": False, "error": "Table 'user_logins' does not exist in Supabase yet. Run the SQL schema in Supabase SQL Editor."}
+        return {"success": False, "error": err_msg}
+
+
+def fetch_holiday_packages_from_supabase(url: Optional[str] = None, key: Optional[str] = None) -> Dict[str, Any]:
+    """Fetch holiday package data dynamically from Supabase holiday_packages table."""
+    client = get_supabase_client(url, key)
+    if not client:
+        return {}
+
+    try:
+        resp = client.table("holiday_packages").select("*").execute()
+        if not resp.data:
+            return {}
+
+        packages = {}
+        for row in resp.data:
+            key_name = (row.get("destination_key") or "").lower().strip()
+            if key_name:
+                packages[key_name] = {
+                    "name": row.get("destination_name"),
+                    "tagline": row.get("tagline"),
+                    "category": row.get("category"),
+                    "best_time_to_visit": row.get("best_time_to_visit"),
+                    "key_attractions": row.get("key_attractions") or [],
+                    "hotels": row.get("hotels") or {},
+                    "transport_from": row.get("transport_fares") or {}
+                }
+        return packages
+    except Exception:
+        return {}
+
 

@@ -20,7 +20,7 @@ def sanitize_api_key(key: str) -> str:
 
 # Gemini API Configuration
 GEMINI_API_KEY = sanitize_api_key(os.getenv("GEMINI_API_KEY", ""))
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
 
 # Supabase Cloud Database Configuration
 SUPABASE_URL = sanitize_api_key(os.getenv("SUPABASE_URL", ""))

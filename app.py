@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, jsonify, session
+
 from pathlib import Path
 from datetime import datetime
+
 import json
 import re
 import uuid
@@ -11,6 +13,9 @@ from bot import GeminiChatbot
 
 
 app = Flask(__name__)
+
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # Secret key used by Flask sessions
 app.secret_key = "gemini-chatbot-secret-key-change-this"
@@ -110,7 +115,10 @@ def load_all_chats():
 
     chats = []
 
+    # --------------------------------------------------------
     # First try Supabase
+    # --------------------------------------------------------
+
     supabase_url = config.SUPABASE_URL
     supabase_key = config.SUPABASE_KEY
 
@@ -119,6 +127,7 @@ def load_all_chats():
         supabase_key
     ):
         try:
+
             supa_sessions = supabase_db.get_all_chat_sessions(
                 url=supabase_url,
                 key=supabase_key
@@ -148,9 +157,15 @@ def load_all_chats():
                 return chats
 
         except Exception as error:
-            print("Supabase history error:", error)
 
+            print(
+                "Supabase history error:",
+                error
+            )
+
+    # --------------------------------------------------------
     # Local fallback
+    # --------------------------------------------------------
 
     for filepath in sorted(
         CHAT_HISTORY_DIR.glob("*.json"),
@@ -222,7 +237,9 @@ def load_chat_messages(session_id):
     supabase_url = config.SUPABASE_URL
     supabase_key = config.SUPABASE_KEY
 
+    # --------------------------------------------------------
     # Supabase first
+    # --------------------------------------------------------
 
     if supabase_db.is_supabase_configured(
         supabase_url,
@@ -247,7 +264,9 @@ def load_chat_messages(session_id):
                 error
             )
 
+    # --------------------------------------------------------
     # Local fallback
+    # --------------------------------------------------------
 
     filepath = CHAT_HISTORY_DIR / f"{session_id}.json"
 
@@ -286,7 +305,9 @@ def delete_chat(session_id):
     supabase_url = config.SUPABASE_URL
     supabase_key = config.SUPABASE_KEY
 
+    # --------------------------------------------------------
     # Supabase
+    # --------------------------------------------------------
 
     if supabase_db.is_supabase_configured(
         supabase_url,
@@ -308,12 +329,13 @@ def delete_chat(session_id):
                 error
             )
 
+    # --------------------------------------------------------
     # Local file
+    # --------------------------------------------------------
 
     filepath = CHAT_HISTORY_DIR / f"{session_id}.json"
 
     if filepath.exists():
-
         filepath.unlink()
 
 
@@ -340,6 +362,9 @@ def get_session_id():
 
 
 def get_chatbot():
+    """
+    Get or create Gemini chatbot for current session.
+    """
 
     session_id = get_session_id()
 
@@ -347,9 +372,11 @@ def get_chatbot():
 
         chatbot = GeminiChatbot(
             api_key=config.GEMINI_API_KEY,
-            model=config.GEMINI_MODEL
-            if hasattr(config, "GEMINI_MODEL")
-            else "gemini-3.5-flash"
+            model=getattr(
+                config,
+                "GEMINI_MODEL",
+                "gemini-3.5-flash"
+            )
         )
 
         chatbots[session_id] = chatbot
@@ -382,15 +409,20 @@ def home():
 
 
 # ============================================================
-# SEND MESSAGE
+# API: SEND MESSAGE
 # ============================================================
 
-@app.route("/chat", methods=["POST"])
-def chat():
+@app.route(
+    "/api/chat",
+    methods=["POST"]
+)
+def api_chat():
 
     try:
 
-        data = request.get_json()
+        data = request.get_json(
+            silent=True
+        ) or {}
 
         user_query = data.get(
             "message",
@@ -408,7 +440,10 @@ def chat():
 
         chatbot = get_chatbot()
 
+        # ----------------------------------------------------
         # Track tool calls
+        # ----------------------------------------------------
+
         tool_events = []
 
         def on_tool_call(name, args):
@@ -430,29 +465,44 @@ def chat():
         chatbot.on_tool_call = on_tool_call
         chatbot.on_tool_result = on_tool_result
 
+        # ----------------------------------------------------
         # Current timestamp
+        # ----------------------------------------------------
+
         timestamp = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S"
         )
 
+        # ----------------------------------------------------
         # Generate Gemini response
+        # ----------------------------------------------------
+
         response_text = chatbot.send_message(
             user_query
         )
 
+        # ----------------------------------------------------
         # Get existing messages
+        # ----------------------------------------------------
+
         messages = load_chat_messages(
             session_id
         )
 
+        # ----------------------------------------------------
         # Add user message
+        # ----------------------------------------------------
+
         messages.append({
             "role": "user",
             "content": user_query,
             "timestamp": timestamp
         })
 
+        # ----------------------------------------------------
         # Add assistant response
+        # ----------------------------------------------------
+
         messages.append({
             "role": "assistant",
             "content": response_text,
@@ -462,7 +512,10 @@ def chat():
             )
         })
 
+        # ----------------------------------------------------
         # Save conversation
+        # ----------------------------------------------------
+
         save_chat_history(
             messages,
             session_id,
@@ -473,7 +526,8 @@ def chat():
         return jsonify({
             "success": True,
             "response": response_text,
-            "tools": tool_events
+            "tools": tool_events,
+            "session_id": session_id
         })
 
     except Exception as error:
@@ -490,10 +544,13 @@ def chat():
 
 
 # ============================================================
-# NEW CHAT
+# API: NEW CHAT
 # ============================================================
 
-@app.route("/new-chat", methods=["POST"])
+@app.route(
+    "/new-chat",
+    methods=["POST"]
+)
 def new_chat():
 
     old_session_id = get_session_id()
@@ -510,29 +567,86 @@ def new_chat():
     )
 
     return jsonify({
-        "success": True
-    })
-
-
-# ============================================================
-# CHAT HISTORY
-# ============================================================
-
-@app.route("/history")
-def history():
-
-    chats = load_all_chats()
-
-    return jsonify({
         "success": True,
-        "chats": chats
+        "session_id": session["session_id"]
     })
 
+
+# ============================================================
+# API: CHAT HISTORY
+# ============================================================
 
 @app.route(
-    "/history/<session_id>"
+    "/api/history",
+    methods=["GET", "POST"]
 )
-def history_messages(session_id):
+def api_history():
+
+    try:
+
+        # ----------------------------------------------------
+        # GET = list conversations
+        # ----------------------------------------------------
+
+        if request.method == "GET":
+
+            chats = load_all_chats()
+
+            return jsonify({
+                "success": True,
+                "chats": chats
+            })
+
+        # ----------------------------------------------------
+        # POST = load specific conversation
+        # ----------------------------------------------------
+
+        data = request.get_json(
+            silent=True
+        ) or {}
+
+        session_id = data.get(
+            "session_id"
+        )
+
+        if not session_id:
+
+            return jsonify({
+                "success": False,
+                "error": "session_id is required."
+            }), 400
+
+        messages = load_chat_messages(
+            session_id
+        )
+
+        return jsonify({
+            "success": True,
+            "messages": messages
+        })
+
+    except Exception as error:
+
+        print(
+            "HISTORY ERROR:",
+            error
+        )
+
+        return jsonify({
+            "success": False,
+            "error": str(error)
+        }), 500
+
+
+# ============================================================
+# API: LOAD PARTICULAR CHAT
+# ============================================================
+
+@app.route(
+    "/api/history/<session_id>",
+    methods=["GET"]
+)
+def api_history_messages(session_id):
 
     messages = load_chat_messages(
         session_id
@@ -544,11 +658,15 @@ def history_messages(session_id):
     })
 
 
+# ============================================================
+# API: DELETE CHAT
+# ============================================================
+
 @app.route(
-    "/history/<session_id>",
+    "/api/history/<session_id>",
     methods=["DELETE"]
 )
-def delete_history(session_id):
+def api_delete_history(session_id):
 
     delete_chat(
         session_id
@@ -565,14 +683,14 @@ def delete_history(session_id):
 
 
 # ============================================================
-# TEST GEMINI CONNECTION
+# API: TEST GEMINI CONNECTION
 # ============================================================
 
 @app.route(
-    "/test-gemini",
+    "/api/gemini/test",
     methods=["POST"]
 )
-def test_gemini():
+def api_test_gemini():
 
     try:
 
@@ -591,6 +709,11 @@ def test_gemini():
 
     except Exception as error:
 
+        print(
+            "GEMINI TEST ERROR:",
+            error
+        )
+
         return jsonify({
             "success": False,
             "error": str(error)
@@ -598,14 +721,14 @@ def test_gemini():
 
 
 # ============================================================
-# TEST SUPABASE
+# API: TEST SUPABASE CONNECTION
 # ============================================================
 
 @app.route(
-    "/test-supabase",
-    methods=["GET"]
+    "/api/supabase/test",
+    methods=["POST", "GET"]
 )
-def test_supabase():
+def api_test_supabase():
 
     try:
 
@@ -621,6 +744,11 @@ def test_supabase():
 
     except Exception as error:
 
+        print(
+            "SUPABASE TEST ERROR:",
+            error
+        )
+
         return jsonify({
             "success": False,
             "error": str(error)
@@ -628,11 +756,14 @@ def test_supabase():
 
 
 # ============================================================
-# AVAILABLE TOOLS
+# API: AVAILABLE TOOLS
 # ============================================================
 
-@app.route("/tools")
-def tools():
+@app.route(
+    "/api/tools",
+    methods=["GET"]
+)
+def api_tools():
 
     try:
 
@@ -646,6 +777,54 @@ def tools():
         })
 
     except Exception as error:
+
+        print(
+            "TOOLS ERROR:",
+            error
+        )
+
+        return jsonify({
+            "success": False,
+            "error": str(error)
+        }), 500
+
+
+# ============================================================
+# API: AVAILABLE MODELS
+# ============================================================
+
+@app.route(
+    "/api/models",
+    methods=["GET"]
+)
+def api_models():
+
+    try:
+
+        current_model = getattr(
+            config,
+            "GEMINI_MODEL",
+            "gemini-3.5-flash"
+        )
+
+        return jsonify({
+            "success": True,
+            "models": [
+                {
+                    "id": current_model,
+                    "name": current_model,
+                    "provider": "Google Gemini"
+                }
+            ],
+            "current_model": current_model
+        })
+
+    except Exception as error:
+
+        print(
+            "MODELS ERROR:",
+            error
+        )
 
         return jsonify({
             "success": False,
@@ -667,6 +846,82 @@ def health():
 
 
 # ============================================================
+# COMPATIBILITY ROUTES
+# ============================================================
+#
+# These keep your older frontend/API URLs working too.
+# Your new frontend should use /api/... routes.
+# ============================================================
+
+
+@app.route(
+    "/chat",
+    methods=["POST"]
+)
+def old_chat():
+
+    return api_chat()
+
+
+@app.route(
+    "/history",
+    methods=["GET"]
+)
+def old_history():
+
+    return api_history()
+
+
+@app.route(
+    "/history/<session_id>",
+    methods=["GET"]
+)
+def old_history_messages(session_id):
+
+    return api_history_messages(
+        session_id
+    )
+
+
+@app.route(
+    "/history/<session_id>",
+    methods=["DELETE"]
+)
+def old_delete_history(session_id):
+
+    return api_delete_history(
+        session_id
+    )
+
+
+@app.route(
+    "/tools",
+    methods=["GET"]
+)
+def old_tools():
+
+    return api_tools()
+
+
+@app.route(
+    "/test-gemini",
+    methods=["POST"]
+)
+def old_test_gemini():
+
+    return api_test_gemini()
+
+
+@app.route(
+    "/test-supabase",
+    methods=["GET"]
+)
+def old_test_supabase():
+
+    return api_test_supabase()
+
+
+# ============================================================
 # RUN SERVER
 # ============================================================
 
@@ -677,8 +932,21 @@ if __name__ == "__main__":
     print("Gemini AI Tool-Calling Chatbot")
     print("=" * 60)
     print()
+
     print("Open your browser:")
     print("http://127.0.0.1:5000")
+
+    print()
+
+    print("API endpoints:")
+    print("  GET  /api/models")
+    print("  GET  /api/tools")
+    print("  GET  /api/history")
+    print("  POST /api/history")
+    print("  POST /api/chat")
+    print("  POST /api/supabase/test")
+    print("  POST /api/gemini/test")
+
     print()
     print("=" * 60)
 

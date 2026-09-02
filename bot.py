@@ -10,8 +10,10 @@ ROOT_DIR = Path(__file__).resolve().parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from google import genai
-from google.genai import types
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.tools import tool
+from langgraph.prebuilt import create_react_agent
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 import config
 from tools import AVAILABLE_TOOLS, TOOL_METADATA
@@ -37,11 +39,11 @@ class GeminiChatbot:
     """Gemini-powered Chatbot with automated and monitored Tool Calling."""
 
     SUPPORTED_MODELS = [
-        "gemini-3.5-flash",
-        "gemini-3.5-flash-lite",
-        "gemini-3.1-flash-lite",
-        "gemini-3.7-flash",
-        "gemini-3.6-flash"
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-1.5-flash-8b",
     ]
 
     def __init__(
@@ -59,7 +61,7 @@ class GeminiChatbot:
         self.on_tool_call = on_tool_call
         self.on_tool_result = on_tool_result
 
-        self.client: Optional[genai.Client] = None
+        self.client: Optional[ChatGoogleGenerativeAI] = None
         self.chat = None
         self.tool_call_history: List[Dict[str, Any]] = []
         self.conversation_history: List[Dict[str, str]] = []
@@ -73,10 +75,14 @@ class GeminiChatbot:
         return bool(self.api_key and self.api_key != "your_gemini_api_key_here" and len(self.api_key) > 10)
 
     def _initialize_client(self) -> None:
-        """Initialize the official Google GenAI Client if API key is valid."""
+        """Initialize LangChain ChatGoogleGenerativeAI if API key is valid."""
         if self.is_live_mode():
             try:
-                self.client = genai.Client(api_key=self.api_key)
+                self.client = ChatGoogleGenerativeAI(
+                    model=self.model,
+                    google_api_key=self.api_key,
+                    temperature=0.7
+                )
             except Exception as e:
                 self.client = None
                 self.last_api_error = str(e)
@@ -113,26 +119,18 @@ class GeminiChatbot:
         return wrapper
 
     def _get_instrumented_tools(self) -> List[Callable]:
-        """Wrap all available tools with telemetry hooks."""
-        return [self._wrap_tool(tool) for tool in AVAILABLE_TOOLS]
+        """Wrap all available tools with telemetry hooks and LangChain @tool."""
+        return [tool(self._wrap_tool(t)) for t in AVAILABLE_TOOLS]
 
     def _initialize_chat(self) -> None:
-        """Create a fresh chat session with tool calling enabled."""
+        """Create a LangChain Agent session using create_react_agent."""
         if not self.is_live_mode() or not self.client:
             return
 
         tools = self._get_instrumented_tools()
-        chat_config = types.GenerateContentConfig(
-            tools=tools,
-            system_instruction=self.system_instruction,
-            temperature=0.7,
-        )
 
         try:
-            self.chat = self.client.chats.create(
-                model=self.model,
-                config=chat_config,
-            )
+            self.chat = create_react_agent(self.client, tools=tools, state_modifier=self.system_instruction)
             self.last_api_error = None
         except Exception as e:
             self.last_api_error = str(e)
@@ -140,10 +138,13 @@ class GeminiChatbot:
                 if fallback != self.model:
                     try:
                         self.model = fallback
-                        self.chat = self.client.chats.create(
-                            model=fallback,
-                            config=chat_config,
+                        fallback_client = ChatGoogleGenerativeAI(
+                            model=self.model,
+                            google_api_key=self.api_key,
+                            temperature=0.7
                         )
+                        self.client = fallback_client
+                        self.chat = create_react_agent(self.client, tools=tools, state_modifier=self.system_instruction)
                         self.last_api_error = None
                         break
                     except Exception as fb_err:
@@ -158,11 +159,8 @@ class GeminiChatbot:
             }
 
         try:
-            client = genai.Client(api_key=self.api_key)
-            resp = client.models.generate_content(
-                model=self.model,
-                contents="ping",
-            )
+            llm = ChatGoogleGenerativeAI(model=self.model, google_api_key=self.api_key)
+            resp = llm.invoke("ping")
             if resp:
                 return {
                     "success": True,
@@ -272,9 +270,17 @@ class GeminiChatbot:
 
             if self.client and self.chat:
                 try:
-                    response = self.chat.send_message(message)
-                    if response and response.text:
-                        reply = response.text
+                    langchain_history = []
+                    for msg in self.conversation_history:
+                        if msg["role"] == "user":
+                            langchain_history.append(HumanMessage(content=msg["content"]))
+                        elif msg["role"] == "assistant":
+                            langchain_history.append(AIMessage(content=msg["content"]))
+
+                    response = self.chat.invoke({"messages": langchain_history})
+                    ai_messages = [m for m in response.get("messages", []) if isinstance(m, AIMessage)]
+                    if ai_messages:
+                        reply = ai_messages[-1].content
                 except Exception as e:
                     self.last_api_error = str(e)
                     reply = self._smart_chat_engine(message)
@@ -654,23 +660,20 @@ class GeminiChatbot:
                 dest_matches.append(d_name)
 
         if has_travel_intent and (dest_matches or any(w in msg_lower for w in ["plan a trip", "holiday package", "travel package", "suggest a trip", "vacation package", "tour package"])):
-            target_dest = dest_matches[0] if dest_matches else "ujjain"
 
+            # ── Detect all known source cities in message ──────────────────────
+            all_known_cities = ["delhi", "mumbai", "bengaluru", "bangalore", "pune",
+                                "hyderabad", "chennai", "kolkata", "ahmedabad",
+                                "nagpur", "amravati", "surat", "jaipur", "indore",
+                                "lucknow", "bhopal", "patna", "chandigarh", "kochi"]
 
-            # Detect source city
-            source_city = "mumbai"
-            for src in ["delhi", "bengaluru", "bangalore", "pune", "hyderabad", "chennai", "kolkata", "ahmedabad", "mumbai"]:
-                if f"from {src}" in msg_lower or f"starting {src}" in msg_lower or f"in {src}" in msg_lower:
-                    source_city = src
-                    break
-
-            # Detect duration in days
+            # ── Detect duration in days ────────────────────────────────────────
             duration_days = 3
             days_match = re.search(r"(\d+)\s*(?:days?|day|nights?|night)", msg_lower)
             if days_match:
                 duration_days = int(days_match.group(1))
 
-            # Detect hotel budget tier preference
+            # ── Detect hotel budget tier preference ────────────────────────────
             hotel_tier = "all"
             if any(w in msg_lower for w in ["cheapest", "budget", "hostel", "low cost", "cheap"]):
                 hotel_tier = "cheapest"
@@ -681,19 +684,46 @@ class GeminiChatbot:
             elif any(w in msg_lower for w in ["richest", "luxury", "5 star", "5-star", "palace", "ultra luxury"]):
                 hotel_tier = "richest"
 
-            # Detect travelers
+            # ── Detect travelers ───────────────────────────────────────────────
             travelers = 1
             trav_match = re.search(r"(\d+)\s*(?:people|person|travelers?|pax|members?)", msg_lower)
             if trav_match:
                 travelers = int(trav_match.group(1))
 
-            pkg_data = wrapped_travel(
-                destination=target_dest,
-                source_city=source_city,
-                duration_days=duration_days,
-                hotel_tier=hotel_tier,
-                num_travelers=travelers
-            )
+            # ── Build multi-leg journey ────────────────────────────────────────
+            # Detect "to X and then to Y" or "X to Y then Y to Z" patterns
+            # Build legs as list of (source, destination) tuples
+            legs = []
+
+            # Pattern: "from A to B then/and B to C"
+            # We read all destinations in order and pair them with the source city before each
+            # Step 1: detect the initial source city
+            initial_source = "mumbai"
+            for city in all_known_cities:
+                if f"from {city}" in msg_lower or msg_lower.startswith(city + " to "):
+                    initial_source = city
+                    break
+
+            # Step 2: build legs from dest_matches in order
+            if len(dest_matches) == 1:
+                # Single destination — simple case
+                legs = [(initial_source, dest_matches[0])]
+            else:
+                # Multi-leg: (source -> dest1), (dest1 -> dest2), etc.
+                legs = [(initial_source, dest_matches[0])]
+                for i in range(1, len(dest_matches)):
+                    legs.append((dest_matches[i - 1], dest_matches[i]))
+
+            # ── Call the travel tool for each leg ─────────────────────────────
+            for (source_city, target_dest) in legs:
+                pkg_data = wrapped_travel(
+                    destination=target_dest,
+                    source_city=source_city,
+                    duration_days=duration_days,
+                    hotel_tier=hotel_tier,
+                    num_travelers=travelers
+                )
+
 
             if pkg_data.get("status") == "success":
                 tr = pkg_data["transport"]
@@ -1141,6 +1171,7 @@ class GeminiChatbot:
         """Reset conversation history and start a new session."""
         self.tool_call_history.clear()
         self.conversation_history.clear()
+        self.last_api_error = None
         self._initialize_chat()
 
     def get_tool_list(self) -> List[Dict[str, str]]:
